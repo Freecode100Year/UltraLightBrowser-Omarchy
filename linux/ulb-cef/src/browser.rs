@@ -51,7 +51,6 @@ struct FrameBuffer {
     width: i32,
     height: i32,
     bgra: Vec<u8>,
-    scale: f32,
     dirty: bool,
 }
 
@@ -73,7 +72,6 @@ impl CefTabView {
             width: 0,
             height: 0,
             bgra: Vec::new(),
-            scale: 1.0,
             dirty: false,
         }));
         let browser = Arc::new(Mutex::new(0usize));
@@ -149,13 +147,19 @@ impl CefTabView {
             }
             let fw = fb.width;
             let fh = fb.height;
-            let s = if fb.scale > 0.0 { fb.scale } else { scale };
             let copy = fb.bgra.clone();
             drop(fb);
 
             if let Ok(surf) = ImageSurface::create_for_data(copy, Format::ARgb32, fw, fh, fw * 4) {
                 let _ = cr.save();
-                cr.scale(1.0 / f64::from(s), 1.0 / f64::from(s));
+                // GTK's Cairo context already accounts for the output scale.
+                // CEF's OSR buffer dimensions can be logical or physical
+                // depending on the platform, so fit it to the drawing area's
+                // actual logical dimensions instead of scaling twice by DPI.
+                cr.scale(
+                    f64::from(w.max(1)) / f64::from(fw),
+                    f64::from(h.max(1)) / f64::from(fh),
+                );
                 let _ = cr.set_source_surface(&surf, 0.0, 0.0);
                 let _ = cr.paint();
                 let _ = cr.restore();
@@ -699,13 +703,11 @@ unsafe extern "C" fn render_on_paint(
         return;
     }
     let st: &Arc<ClientState> = CefObject::state_from(self_);
-    let scale = (*st.scale_factor.lock().unwrap()).max(1.0);
     let byte_len = (width as usize) * (height as usize) * 4;
     let slice = std::slice::from_raw_parts(buffer.cast::<u8>(), byte_len);
     let mut fb = st.frame.lock().unwrap();
     fb.width = width;
     fb.height = height;
-    fb.scale = scale;
     fb.dirty = true;
     fb.bgra.clear();
     fb.bgra.extend_from_slice(slice);
