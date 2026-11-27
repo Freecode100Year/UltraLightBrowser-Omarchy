@@ -1,7 +1,6 @@
 use crate::ffi::{read_cef_str, take_userfree_str, CefObject, CefStr, sys};
 use std::ffi::c_void;
 use std::os::raw::c_int;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use ulb_core::internal_pages::{lookup_asset, page_name};
 
@@ -133,11 +132,10 @@ unsafe extern "C" fn res_read(
     1
 }
 
-/// Shared state for `https://ulb.internal/` and `https://f8964.internal/` scheme factories.
+/// State for the `https://ulb.internal/` scheme factory.
 #[derive(Clone)]
 pub struct InternalSchemeState {
     pub rpc: RpcCallback,
-    pub memorial_dir: PathBuf,
 }
 
 pub fn create_internal_scheme_factory(
@@ -202,38 +200,6 @@ unsafe extern "C" fn factory_create(
         .get_url
         .map(|f| take_userfree_str(f(request)))
         .unwrap_or_default();
-
-    if url.starts_with("https://f8964.internal") {
-        let rel = url
-            .split("://f8964.internal/")
-            .nth(1)
-            .unwrap_or("index.html")
-            .split(['?', '#'])
-            .next()
-            .unwrap_or("index.html");
-        let clean = if rel.is_empty() { "index.html" } else { rel };
-        if !clean.contains("..") {
-            let candidate = state.memorial_dir.join(clean);
-            if let Ok(bytes) = std::fs::read(&candidate) {
-                let mime = if clean.ends_with(".css") {
-                    "text/css"
-                } else if clean.ends_with(".js") {
-                    "application/javascript"
-                } else if clean.ends_with(".png") {
-                    "image/png"
-                } else if clean.ends_with(".jpg") || clean.ends_with(".jpeg") {
-                    "image/jpeg"
-                } else if clean.ends_with(".svg") {
-                    "image/svg+xml"
-                } else {
-                    "text/html"
-                };
-                return make_static_resource_handler(200, mime, bytes);
-            }
-        }
-        let fallback = "<!doctype html><meta charset=utf-8><body style='background:#151619;color:#ddd;font:15px/1.6 sans-serif;padding:48px'><h2>离线档案包未随此开发树打包</h2><p>将 <code>f8964.pack</code> 置于程序目录或数据目录后即可离线阅读完整资料。</p></body>";
-        return make_static_resource_handler(200, "text/html", fallback.as_bytes().to_vec());
-    }
 
     let path = page_name(&url).unwrap_or_default();
     if path == "__rpc" {

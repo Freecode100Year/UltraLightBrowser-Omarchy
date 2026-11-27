@@ -102,11 +102,10 @@ cargo build --manifest-path linux/Cargo.toml --locked --release -p ulb-linux
 - **WebGL / WebGPU / Worker / 滚动条**：会话级 M1/M2/M3/M4 GPU 与核心数画像、WebGPU `apple` · `metal-3`、Dedicated/Service Worker 同步改写、隐藏 SharedWorker、0px 悬浮滚动条。
 - **内置自检页**：菜单 **「⋯ → 浏览器UA标识 → 检查当前浏览器UA标识…」**（`https://ulb.internal/selftest.html`）。
 
-### 3. 广告拦截、阅读器与六四事件离线档案
+### 3. 广告拦截与阅读器
 
 - **Rust 规则引擎（`rust/adblock`）**：拦截 230+ 广告与统计域名、第三方跟踪像素及 Service Worker 请求，自动将常见统计脚本替换为无害空壳，支持单站开关与 `Ctrl+Shift+H` 点选隐藏页面元素。
 - **阅读器 & 原生面板**：基于 Mozilla Readability 的严格 CSP 阅读器、书签/文件夹与 Netscape HTML 导入导出、内存历史记录、标签页概览与边栏。
-- **六四事件（离线版）**：位于菜单 **「⋯ → 六四事件（离线版）」**，运行在隔离源 `https://f8964.internal/`（无桥接权限）。如需包含离线数据包，可用 `python tools/pack_f8964.py ~/.local/share/ultralight/f8964.pack` 生成后放入数据目录或二进制同级目录。
 
 ### 4. PipeWire 音频检测与 Web Audio DSP
 
@@ -125,7 +124,7 @@ cargo build --manifest-path linux/Cargo.toml --locked --release -p ulb-linux
 
 | 位置 | 内容 | 生命周期 |
 | :--- | :--- | :--- |
-| `$XDG_RUNTIME_DIR/ulb-session-<pid>` | CEF 会话数据、Cookie、缓存、解包的离线快照 | 仅本次运行（`tmpfs`），退出即删，启动时清理死 PID 目录 |
+| `$XDG_RUNTIME_DIR/ulb-session-<pid>` | CEF 会话数据、Cookie 与缓存 | 仅本次运行（`tmpfs`），退出即删，启动时清理死 PID 目录 |
 | `$XDG_RUNTIME_DIR/ulb.sock` | 单实例唤起与打开链接 Unix Socket | 随实例退出清理 |
 | `~/.config/ultralight/config.json` | 浏览器偏好、UA 身份、元素隐藏规则 | 持久化 |
 | `~/.local/share/ultralight/` | 书签、阅读列表、标签页组、加密 `lines.dat`、扩展安装包、用户脚本、WARP 账号缓存 | 持久化（不含浏览历史） |

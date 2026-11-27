@@ -4,7 +4,6 @@ pub mod audio_endpoint;
 pub mod config;
 pub mod extension_pkg;
 pub mod extensions_store;
-pub mod f8964_pack;
 pub mod internal_pages;
 pub mod library;
 pub mod line_store;

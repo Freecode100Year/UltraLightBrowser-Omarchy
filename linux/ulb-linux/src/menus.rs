@@ -12,7 +12,6 @@ pub struct MainMenuContext<'a> {
     pub web_page: bool,
     pub tab_zoom: f64,
     pub host_adblock_on: bool,
-    pub tab_count: usize,
     pub extension_count: usize,
     pub script_count: usize,
     pub headphones_detected: bool,
@@ -24,12 +23,7 @@ pub fn build_main_menu(ctx: &MainMenuContext<'_>) -> Menu {
     let warp = ctx.warp;
     let root = Menu::new();
 
-    // Section 1: Memorial offline snapshot
-    let s_mem = Menu::new();
-    s_mem.append(Some("六四事件（离线版）"), Some("win.memorial"));
-    root.append_section(None, &s_mem);
-
-    // Section 2: Windows & tabs
+    // Section 1: Windows & tabs
     let s_win = Menu::new();
     s_win.append(Some("新建标签页\tCtrl+T"), Some("win.new-tab"));
     s_win.append(Some("新建窗口\tCtrl+N"), Some("win.new-window"));
@@ -160,25 +154,6 @@ pub fn build_main_menu(ctx: &MainMenuContext<'_>) -> Menu {
     s_page.append_submenu(
         Some(if is_mac { "浏览器UA标识 · macOS" } else { "浏览器UA标识 · 默认" }),
         &ua_sub,
-    );
-
-    let power_sub = Menu::new();
-    for (mins, label, act) in [
-        (0, "从不", "win.suspend-0"),
-        (5, "5 分钟后", "win.suspend-5"),
-        (10, "10 分钟后", "win.suspend-10"),
-        (30, "30 分钟后", "win.suspend-30"),
-        (60, "1 小时后", "win.suspend-60"),
-    ] {
-        let prefix = if settings.tab_suspend_minutes == mins { "● " } else { "○ " };
-        power_sub.append(Some(&format!("{prefix}{label}")), Some(act));
-    }
-    if ctx.tab_count > 1 {
-        power_sub.append(Some("立即挂起其他标签页"), Some("win.suspend-others"));
-    }
-    s_page.append_submenu(
-        Some(if settings.tab_suspend_minutes > 0 { "节能 · 自动挂起" } else { "节能 · 关闭" }),
-        &power_sub,
     );
 
     root.append_section(None, &s_page);

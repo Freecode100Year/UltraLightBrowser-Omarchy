@@ -810,7 +810,7 @@ unsafe extern "C" fn load_start(
     }
     let url = (*frame).get_url.map(|f| take_userfree_str(f(frame))).unwrap_or_default();
     let is_selftest = url.contains("selftest.html");
-    if (is_internal_url(&url) && !is_selftest) || url.starts_with("https://f8964.internal") {
+    if is_internal_url(&url) && !is_selftest {
         return;
     }
     let st: &Arc<ClientState> = CefObject::state_from(self_);
@@ -864,7 +864,7 @@ unsafe extern "C" fn load_end(
         return;
     }
     let url = (*frame).get_url.map(|f| take_userfree_str(f(frame))).unwrap_or_default();
-    if is_internal_url(&url) || url.starts_with("https://f8964.internal") {
+    if is_internal_url(&url) {
         return;
     }
     let st: &Arc<ClientState> = CefObject::state_from(self_);
@@ -919,7 +919,7 @@ unsafe extern "C" fn res_req_before_load(
         return sys::cef_return_value_t_RV_CONTINUE;
     }
     let url = (*request).get_url.map(|f| take_userfree_str(f(request))).unwrap_or_default();
-    if is_internal_url(&url) || url.starts_with("https://f8964.internal") {
+    if is_internal_url(&url) {
         return sys::cef_return_value_t_RV_CONTINUE;
     }
 

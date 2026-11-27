@@ -146,11 +146,11 @@ fn settings_snapshot(s: &AppSettings) -> Value {
         "searchEngine": s.search_engine,
         "userAgentProfile": s.user_agent_profile,
         "macPlatformVersion": s.mac_platform_version,
+        "supportsTabSuspend": false,
         "hardwareAcceleration": s.hardware_acceleration,
         "videoEnhancement": s.video_enhancement,
         "enableAdBlock": s.enable_ad_block,
         "saveHistory": s.save_history,
-        "tabSuspendMinutes": s.tab_suspend_minutes,
         "preloadLinks": s.preload_links,
         "warpEnabled": s.warp_enabled,
         "warpFailClosed": s.warp_fail_closed,
@@ -217,11 +217,6 @@ fn apply_setting(s: &mut AppSettings, key: &str, v: &Value, fx: &mut Vec<SideEff
             }
         }
         "saveHistory" => if let Some(b) = as_bool(v) { s.save_history = b; },
-        "tabSuspendMinutes" => {
-            if let Some(n) = v.as_i64() {
-                s.tab_suspend_minutes = n.clamp(0, 1440) as i32;
-            }
-        }
         "preloadLinks" => if let Some(b) = as_bool(v) { s.preload_links = b; },
         "warpEnabled" => {
             if let Some(b) = as_bool(v) {
@@ -317,8 +312,11 @@ pub fn dispatch_rpc(ctx: &mut BridgeContext<'_>, raw_json: &str) -> Option<RpcOu
                 "reading": reading,
                 "blocked": ctx.total_blocked_ads,
                 "private": ctx.private_mode,
-                "showFavorites": ctx.config.settings.start_show_favorites,
-                "showReading": ctx.config.settings.start_show_reading,
+                "show": {
+                    "favorites": ctx.config.settings.start_show_favorites,
+                    "reading": ctx.config.settings.start_show_reading,
+                    "memorial": false,
+                },
                 "background": ctx.config.settings.start_background,
                 "warp": {
                     "enabled": ctx.config.settings.warp_enabled,

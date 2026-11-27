@@ -25,7 +25,6 @@ use ulb_core::audio_dsp::{build_audio_dsp_script, build_audio_update_script};
 use ulb_core::config::{ConfigStore, DEFAULT_HOME_URL};
 use ulb_core::extension_pkg::{find_recommended_extension, store_download_url};
 use ulb_core::extensions_store::ExtensionsStore;
-use ulb_core::f8964_pack::extract_pack;
 use ulb_core::internal_pages::internal_url;
 use ulb_core::library::{Library, BOOKMARKS_FOLDER, FAVORITES_FOLDER};
 use ulb_core::line_store::LineStore;
@@ -277,24 +276,6 @@ fn url_encode(input: &str) -> String {
     out
 }
 
-fn extract_memorial_pack(paths: &AppPaths, session_path: &std::path::Path) -> PathBuf {
-    let dest = session_path.join("f8964");
-    let mut candidates = vec![paths.data_dir.join("f8964.pack")];
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(dir) = exe.parent() {
-            candidates.push(dir.join("f8964.pack"));
-        }
-    }
-    for src in candidates {
-        if let Ok(bytes) = std::fs::read(&src) {
-            if extract_pack(&bytes, &dest).is_ok() {
-                break;
-            }
-        }
-    }
-    dest
-}
-
 pub fn run_browser(
     app: &Application,
     paths: AppPaths,
@@ -355,8 +336,6 @@ pub fn run_browser(
     let ua_for_cef = init_policy.user_agent_string.clone();
     let fail_closed = host_stores.config.settings.warp_fail_closed;
     let warp_enabled = host_stores.config.settings.warp_enabled;
-    let memorial_dir = extract_memorial_pack(&paths, session.path());
-
     let stores = Arc::new(Mutex::new(host_stores));
     let policy = Arc::new(Mutex::new(init_policy));
 
@@ -417,7 +396,6 @@ pub fn run_browser(
 
     let (cef_runtime, cef_error) = match CefRuntime::init(CefConfig {
         session_dir: session.path().to_path_buf(),
-        memorial_dir,
         extension_dirs: enabled_ext_dirs,
         user_agent: ua_for_cef,
         socks_port: initial_socks_port,
@@ -503,6 +481,8 @@ pub fn run_browser(
         .child(&suggest_list)
         .build();
     let suggest_popover = Popover::builder().child(&suggest_scroll).autohide(true).build();
+    // Keep keyboard focus in the address entry while suggestions are shown.
+    suggest_popover.set_focusable(false);
     suggest_popover.set_parent(&address_entry);
 
     let find_bar = GtkBox::builder()
@@ -1113,7 +1093,6 @@ impl BrowserWindow {
             web_page,
             tab_zoom: zoom,
             host_adblock_on: host_adblock,
-            tab_count: st.tabs.len(),
             extension_count,
             script_count,
             headphones_detected,
@@ -1154,7 +1133,6 @@ impl BrowserWindow {
             group.add_action(&act);
         };
 
-        add("memorial", Box::new(|bw| bw.new_tab("https://f8964.internal/index.html", true)));
         add("new-tab", Box::new(|bw| { let u = bw.state.borrow().home_url(); bw.new_tab(&u, true); }));
         add("new-window", Box::new(|bw| { let u = bw.state.borrow().home_url(); bw.new_tab(&u, true); }));
         add("new-private", Box::new(|bw| bw.show_toast("可通过 --private 参数启动无痕窗口")));
@@ -1597,6 +1575,7 @@ impl BrowserWindow {
                 bw_chg.suggest_list.append(&row);
             }
             bw_chg.suggest_popover.popup();
+            bw_chg.address_entry.grab_focus();
         });
 
         let bw_row = Rc::clone(self);

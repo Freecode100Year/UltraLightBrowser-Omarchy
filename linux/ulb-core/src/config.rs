@@ -53,7 +53,6 @@ pub struct AppSettings {
     pub new_tab_page: String,
     pub search_engine: String,
     pub save_history: bool,
-    pub tab_suspend_minutes: i32,
     pub start_show_favorites: bool,
     pub start_show_reading: bool,
     pub start_background: String,
@@ -89,7 +88,6 @@ impl Default for AppSettings {
             new_tab_page: "home".to_string(),
             search_engine: "google".to_string(),
             save_history: true,
-            tab_suspend_minutes: 10,
             start_show_favorites: true,
             start_show_reading: true,
             start_background: "aurora".to_string(),
@@ -215,7 +213,6 @@ impl ConfigStore {
                 &["google", "brave", "bing", "duckduckgo", "startpage", "baidu"],
             );
             read_bool("saveHistory", &mut self.settings.save_history);
-            read_int("tabSuspendMinutes", &mut self.settings.tab_suspend_minutes, 0, 240);
             read_bool("startShowFavorites", &mut self.settings.start_show_favorites);
             read_bool("startShowReading", &mut self.settings.start_show_reading);
             read_choice(
@@ -329,7 +326,7 @@ mod tests {
         // Legacy config migration
         fs::write(
             dir.join("config.json"),
-            r#"{"settings":{"startUrl":"https://www.google.com","startupPage":"start","newTabPage":"start","macPlatformVersion":"26.2.0","tabSuspendMinutes":999}}"#,
+            r#"{"settings":{"startUrl":"https://www.google.com","startupPage":"start","newTabPage":"start","macPlatformVersion":"26.2.0"}}"#,
         )
         .unwrap();
         cfg.load();
@@ -337,7 +334,6 @@ mod tests {
         assert_eq!(cfg.settings.startup_page, "home");
         assert_eq!(cfg.settings.new_tab_page, "home");
         assert_eq!(cfg.settings.mac_platform_version, "27.2.0");
-        assert_eq!(cfg.settings.tab_suspend_minutes, 10); // out-of-range rejected
 
         assert!(cfg.add_block_rule("example.com", ".banner"));
         assert!(!cfg.add_block_rule("example.com", ".banner"));

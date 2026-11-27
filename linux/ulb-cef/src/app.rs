@@ -10,7 +10,6 @@ use std::sync::{Arc, Mutex};
 /// Startup configuration for initializing Chromium/CEF dynamically from Arch system `/usr/lib/cef`.
 pub struct CefConfig {
     pub session_dir: PathBuf,
-    pub memorial_dir: PathBuf,
     pub extension_dirs: Vec<PathBuf>,
     pub user_agent: String,
     pub socks_port: u16,
@@ -143,7 +142,7 @@ pub struct CefRuntime {
 }
 
 impl CefRuntime {
-    /// Initializes system CEF (`156.x`), registers `ulb.internal`/`f8964.internal`, and prepares extensions.
+    /// Initializes system CEF (`156.x`), registers `ulb.internal`, and prepares extensions.
     pub fn init(cfg: CefConfig) -> Result<Self, String> {
         ensure_api_hash()?;
 
@@ -201,17 +200,13 @@ impl CefRuntime {
 
         let scheme_state = InternalSchemeState {
             rpc: cfg.rpc,
-            memorial_dir: cfg.memorial_dir,
         };
         let https = CefStr::from_str("https");
         let ulb_dom = CefStr::from_str("ulb.internal");
-        let f_dom = CefStr::from_str("f8964.internal");
 
         unsafe {
-            let f1 = create_internal_scheme_factory(scheme_state.clone());
+            let f1 = create_internal_scheme_factory(scheme_state);
             sys::cef_register_scheme_handler_factory(https.as_ptr(), ulb_dom.as_ptr(), f1);
-            let f2 = create_internal_scheme_factory(scheme_state);
-            sys::cef_register_scheme_handler_factory(https.as_ptr(), f_dom.as_ptr(), f2);
         }
 
         let loaded_extension_ids = cfg

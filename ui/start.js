@@ -26,6 +26,7 @@ async function load() {
   const s = await call("getStart");
   document.body.className = "bg-" + (s.background || "aurora");
   const show = s.show || {};
+  document.querySelector(".memorial")?.classList.toggle("hidden", show.memorial === false);
   const fav = document.getElementById("fav-grid");
   fav.replaceChildren(...s.favorites.map((f) => siteTile(f)),
     el("a", { class: "site add", href: "#", onclick: (e) => { e.preventDefault(); addFavorite(); } },
