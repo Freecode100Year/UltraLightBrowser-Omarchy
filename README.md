@@ -2,467 +2,180 @@
   <img src="resources/icon.png" width="128" height="128" alt="UltraLightBrowser">
 </p>
 
-<h1 align="center">UltraLightBrowser</h1>
+<h1 align="center">UltraLightBrowser-Omarchy</h1>
 
 <p align="center">
-  极简、轻量的 Windows 原生浏览器 · Win32 + C++20 + Microsoft Edge WebView2
+  专为 <strong>Omarchy / Arch Linux</strong> 打造的极简原生浏览器 · Rust + GTK4 + PipeWire + 系统 CEF + Go WARP/Xray
 </p>
 
 <p align="center">
-  <a href="https://dl.freedom8964.com/"><img src="https://img.shields.io/badge/下载-v2.10.1-blue" alt="下载"></a>
-  <a href="https://github.com/Freecode100Year/UltraLightBrowser"><img src="https://img.shields.io/badge/源码-GitHub-181717?logo=github" alt="GitHub"></a>
-  <a href="https://gitlab.com/sj9292008133/UltraLightBrowser"><img src="https://img.shields.io/badge/源码-GitLab-fc6d26?logo=gitlab" alt="GitLab"></a>
-  <img src="https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078d4?logo=windows" alt="Platform">
-  <img src="https://img.shields.io/badge/C%2B%2B-20-blue?logo=cplusplus" alt="C++20">
+  <img src="https://img.shields.io/badge/Omarchy-Arch%20Linux%20x86__64-1793d1?logo=archlinux" alt="Omarchy / Arch Linux">
+  <img src="https://img.shields.io/badge/Rust-GTK4%20%2B%20PipeWire-000000?logo=rust" alt="Rust + GTK4 + PipeWire">
+  <img src="https://img.shields.io/badge/Engine-System%20CEF%20156-4285F4?logo=googlechrome" alt="System CEF">
+  <a href="https://github.com/Freecode100Year/UltraLightBrowser"><img src="https://img.shields.io/badge/上游项目-UltraLightBrowser-181717?logo=github" alt="Upstream"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT"></a>
 </p>
 
 <p align="center">
-  <img src="docs/screenshot.jpg" width="820" alt="UltraLightBrowser 截图">
+  <img src="docs/screenshot.jpg" width="820" alt="UltraLightBrowser 界面参考">
 </p>
 
-## 为什么做这个浏览器
+## 一键安装（Omarchy / Arch Linux）
 
-你可能遇到过这些问题：
+在终端运行以下命令，自动安装系统依赖（`cef`、`gtk4`、`libpipewire`、`unzip` 等）、编译 Rust/Go 组件并打包为 Arch 系统包 `ultralightbrowser-git`（含应用启动器入口与图标）：
 
-- **开了代理，真实 IP 还是漏了。** 网页通过 WebRTC 就能拿到本机地址；域名照样交给运营商的 DNS 解析，访问了哪些网站一清二楚。
-- **翻墙软件要装驱动、要管理员权限**，公司电脑、网吧、别人的电脑上都装不了；装了又是全局的，所有程序都被接管。
-- **代理一断，浏览器悄悄改成直连**，你还以为自己在加密线路里。
-- **普通浏览器什么都记**：历史、Cookie、缓存、下载记录、DNS 缓存、任务栏“最近”列表，关了也还在硬盘上。
-- **WARP 在有些网络里被封或限速**，客户端连不上也不告诉你为什么。
-
-UltraLightBrowser 把这些问题放在一个约 21MB 的 exe 里解决：**双击运行，不用安装，不要管理员权限，加密线路只管这一个浏览器**，关掉就清空全部浏览痕迹。
-
-界面仿照 macOS Safari（紧凑标签栏、起始页、边栏、阅读器、标签页概览，选项都在右上角“⋯”菜单），网页由 Windows 自带的 Edge WebView2（Chromium）渲染，兼容性与 Edge 相同，安全补丁随系统更新。
-
-## 和 Chrome 有什么不同
-
-两者用的是同一个 Chromium 内核（本浏览器通过 Windows 自带的 Edge WebView2），网页打开的效果和兼容性基本一样。不同的是内核外面的部分：
-
-| | UltraLightBrowser | Google Chrome |
-| :--- | :--- | :--- |
-| **安装** | 单个约 21MB 的 exe，双击运行，不要管理员权限，程序本身不写注册表；exe 可放在 U 盘里到别的电脑上运行（资料存在那台电脑的 `%LOCALAPPDATA%`） | 需要安装，占用数百 MB，后台常驻更新服务 |
-| **账号** | 没有账号，不登录任何服务 | 鼓励登录 Google 账号，同步书签、历史、密码 |
-| **上网线路** | 内置 Cloudflare WARP（默认开启）和公共线路；可添加自己的线路和订阅（VLESS / Trojan / VMess / Shadowsocks / Hysteria2），可自动选最快；只有浏览器走线路，其他程序不受影响 | 没有内置线路，只能用系统代理或另装 VPN（通常接管整台电脑） |
-| **扩展和脚本** | 可加载 Chrome / Edge 扩展（文件夹或 .crx / .zip），内置推荐扩展一键安装，可导入油猴用户脚本 | 扩展要从商店安装 |
-| **线路断开时** | 我的线路断开一律不联网；WARP 可设为断开时阻止联网 | 代理断开就直接连接，不会提醒 |
-| **DNS** | 开启线路时域名在线路内解析，运营商看不到你访问了哪些域名；解析不到也不会退回本机 DNS | 使用系统 DNS，或可选的“安全 DNS” |
-| **WebRTC** | 只走线路，网页拿不到真实 IP | 用系统代理时，WebRTC 可能绕过代理暴露真实 IP |
-| **浏览痕迹** | 关闭即删除历史、Cookie、缓存、下载列表、网站设置、DNS 缓存、任务栏“最近”记录；历史从不写入硬盘；意外退出后下次启动补删 | 默认长期保存，需要手动清除或每次用无痕窗口 |
-| **广告与跟踪** | 内置 230 多个广告与统计域名和跟踪路径拦截，自动隐藏广告位，YouTube 视频广告去除；严格防跟踪，还能点选隐藏页面元素 | 只过滤违反“更好广告标准”的广告；新版扩展规范（MV3）限制了 uBlock Origin 等拦截扩展 |
-| **浏览器标识** | 菜单一键切换为 macOS 上的 Edge，请求头、Client Hints、WebGL、Worker 全部一致改写，附自检页 | 没有内置切换，只能在开发者工具里临时模拟 |
-| **音频** | 可选人声增强、夜间模式、音量放大到 300%，附视频播放诊断 | 无 |
-| **界面** | 仿 macOS Safari：当前标签就是地址栏，选项都在一个“⋯”菜单 | Chrome 自己的界面 |
-| **内核更新** | 随 Windows 自动更新 WebView2，浏览器本体需手动下载新版 | 自动更新 |
-| **平台** | 仅 Windows 10/11 x64 | Windows、macOS、Linux、手机 |
-
-**这些 Chrome 有、本浏览器没有：** 扩展商店、账号同步、密码管理、网页翻译、多设备支持。离不开这些功能时请继续用 Chrome；只想安静、干净、带线路地上网时，用本浏览器。
-
-## 网络怎么用
-
-浏览器有三种上网方式，在 **菜单“⋯ → 网络线路”** 里选择（也可在“设置 → 网络”），**选完重新启动浏览器生效**。
-
-| 方式 | 网站看到的地址 | 域名谁来解析 | 线路不通时 | 适合 |
-| :--- | :--- | :--- | :--- | :--- |
-| **Cloudflare WARP**（默认） | Cloudflare 的地址 | Cloudflare DNS（在隧道内） | 默认改为直接连接；可设为阻止联网 | 日常上网，隐藏真实 IP 和 DNS |
-| **我的线路**（公共线路或你添加的线路） | 线路服务器的出口地址 | 线路服务器 | **一律不联网**，从不直连 | WARP 被封锁或限速的网络 |
-| **直接连接** | 你的真实 IP | 本机 / 运营商 DNS | — | 访问只在本地网络可用的网站 |
-
-无论哪种方式，**只有这个浏览器走线路**，其他程序和系统网络不受影响。
-
-### 1. Cloudflare WARP（默认，开箱即用）
-
-什么都不用设置。第一次运行时自动注册免费 WARP 账号，后台运行一个用户态 WireGuard 组件（无驱动），所有网页经 WARP 加密隧道访问。
-
-- **每 3 天自动换一个出口 IPv6**（v2.6.0）：每个 WARP 账号从自己的 IPv6 地址出去，浏览器每 3 天自动注册一个新账号，网站看到的 IPv6 随之更换。新隧道建好、测试能用之后才切换，旧隧道再保留 2 分钟让正在进行的下载完成，已打开的网页不断线；注册失败时继续用原账号，1 小时后再试。
-- **注册接口跟随官方 App 更新**（v2.6.0）：按 WARP for Android 6.38.9 的方式注册（与开源工具 wgcf 2026-09 起相同），旧接口保留作后备，Cloudflare 停用其中一个时仍能注册。
-- **IP 优选**：自动测速 Cloudflare 多个入口地址段和 50 多个 UDP 端口，切到最快的入口，切换时已打开的网页不断线。每 6 小时、全部入口不通时会重新优选，也可以手动点“网络线路 → 重新优选 IP”。
-- **防泄露**：WebRTC 只走隧道；隧道内解析不到的域名直接报错，不会改用本机 DNS。
-- **怕断线后暴露 IP**：在“网络线路”里勾选 **“WARP 断开时阻止联网”**。勾选后 WARP 不通、组件被杀毒软件拦截或无法启动时，浏览器都不联网。
-- **看状态**：“网络线路”菜单第一行显示当前状态（已连接 / 正在优选 IP / 未连接（直接连接）/ 未连接（已阻止联网））。
-
-### 2. 我的线路（WARP 用不了时）
-
-**直接用内置公共线路：** 在“网络线路”中选“我的线路”，重新启动即可，不用导入任何东西。
-
-- 公共线路**只能经 IPv6 连接**，你的网络必须有 IPv6（可在 [test-ipv6.com](https://test-ipv6.com/) 检查）。
-- **入口地址每 3 天自动更换**（v2.6.0）：服务器每 3 天换一个 IPv6 入口地址，浏览器按同一规则算出新地址，不查 DNS、不用更新程序，单个地址被封也不影响下一个周期。浏览器同时测试本周期、上一周期的地址和原来的固定地址，用排在最前面的可用地址（启动最多多等约 15 秒）。
-- 出口经 Cloudflare WARP，网站看不到服务器的真实地址。
-- 服务器不记录访问日志，不允许 BT 下载和发送邮件。
-
-**添加自己的线路或订阅（v2.8.0）：** 菜单“⋯ → 网络线路 → 管理我的线路…”（或“设置 → 我的线路”）：
-
-- **导入链接…**：一次粘贴多条分享链接，每行一条。支持：
-  - 协议：`vless://`、`trojan://`、`vmess://`、`ss://`（含 Shadowsocks 2022）、`hysteria2://` / `hy2://`（v2.9.0 起，支持 Salamander 混淆）
-  - 传输：TCP、WebSocket、HTTPUpgrade、XHTTP、gRPC（v2.9.0 起）
-  - 安全：TLS、REALITY、无（Hysteria2 一律 TLS）
-  - 不支持：TUIC、Shadowsocks 插件、跳过证书验证（allowInsecure / insecure）的链接。导入时逐条检查，不能用的会列出原因。
-- **添加订阅…**：粘贴订阅地址（通用 / v2rayN 的 Base64 格式；不支持 Clash YAML），自动导入其中的全部线路，点“更新”重新下载。浏览器正在联网时，订阅先经当前线路下载，失败再直接下载。
-- **全部测速 / 测速**：同时测试每条线路，显示延迟或“不可用”。
-- **选择使用哪条**：在“设置 → 网络 → 我的线路使用”里选内置公共线路、某一条线路，或 **自动选择**：启动时同时测试前 20 条，用最快的；它断开时自动换到另一条，每小时重新比较一次。
-- 选好后在“网络线路”中选“我的线路”并重新启动。
-- 线路和订阅地址用 Windows DPAPI 加密保存在本机（`warp\lines.dat`），只有当前 Windows 账户能解密；旧版本导入的那条链接会自动迁移过来。
-- 网页和域名解析全部由服务器完成，WebRTC 也只走线路。
-- **自己的服务器也想每 3 天换地址：** 服务器要有一个路由到本机的 IPv6 /64（例如 Hurricane Electric 隧道的 Routed /64），Xray 入站监听 `::`（所有地址）。在服务器上运行一次：
-
-  ```bash
-  sudo bash server/ulb-line-ipv6.sh install --uuid <链接里 @ 前面的 UUID> --prefix <你的/64，如 2001:db8:1:2::/64>
-  ```
-
-  然后在导入的链接末尾加上 `&rotate6=<同一个 /64>`。脚本每小时检查一次，把上一周期、本周期、下一周期的地址加到网卡上，过期的自动删除，原来的地址不动；`status` 查看当前地址，`uninstall` 卸载。
-- **Xray 只能监听固定地址时**（例如同一端口上还有别的线路）：安装时加 `--dnat-to <线路原来的固定地址>`。脚本用一张独立的 nftables 表 `ulb_line`，把发往三个周期地址的连接转给固定地址，不改 Xray 配置、不重启 Xray，也不动其他防火墙规则；整段 /64 已路由到本机时不再往网卡加地址。内置公共线路的服务器就是这样配置的。
-
-**连不上时看原因：** “网络线路”菜单的状态行会写明原因：
-
-| 状态行显示 | 意思 | 怎么办 |
-| :--- | :--- | :--- |
-| 本机没有 IPv6 网络，这条线路需要 IPv6 | 你的网络没有 IPv6 | 换有 IPv6 的网络（部分手机热点有），或在路由器里开启 IPv6，或导入自己的服务器链接 |
-| 连不到入口服务器 | 有 IPv6，但到服务器的连接被阻断 | 换网络再试，或导入其他服务器 |
-| 入口服务器拒绝了连接，链接可能已失效 | 能连上服务器但握手失败 | 公共线路：更新到最新版；自己的链接：向提供者要新链接 |
-
-### 3. 直接连接
-
-不经过任何线路，等同普通浏览器的网络。网站会看到你的真实 IP。
-
-### 使用前要知道
-
-- WARP 的运营方 Cloudflare、线路服务器的运营方，都能看到你访问了**哪些网站**（看不到加密网页的内容）。只导入你信任的人提供的链接。
-- WARP 账号注册用的是官方 App 的同一接口（非公开 API），Cloudflare 可能随时更改或限制。
-- 在中国大陆等网络中，WARP 入口和 WireGuard 协议可能被封锁或限速，IP 优选只能尽量寻找可用入口。
-- 使用 WARP 或我的线路时，“预先载入链接”自动停用（Chromium 内核使用代理时不预先载入）。
-- 部分杀毒软件可能对内置的网络组件误报。
-
-## 六四事件（离线版）
-
-右上角 **「⋯」菜单最上方的「六四事件（离线版）」**（「个人收藏」页最上方也有入口）打开 [freedom8964.com](https://freedom8964.com)（1989 年天安门事件资料采集与归档导航站）的离线快照，简体 / 繁體 / English 三种语言，**不联网也能看**。
-
-- 快照在每次发布新版时自动打包进程序（`tools/pack_f8964.py`，取自 freedom8964.com 网站），每页顶部写明快照日期，并有「查看在线最新版」链接。
-- 快照放在独立地址 `https://f8964.internal/`，和浏览器的内置页面分开：它不能调用浏览器的任何功能，其他网站也无法嵌入或读取它。
-- 打开离线快照不会产生任何网络访问。页面里指向维基百科等外部资料的链接、「查看在线最新版」需要联网：请在开启 WARP 或「我的线路」时打开，直接连接时网络运营商能看到你访问的网站。
-- 想一打开浏览器就看到它：「设置 → 通用」，把「主页」填为 `https://f8964.internal/index.html`，「UltraLightBrowser 打开时」选「主页」。
-
-## 关闭即清除
-
-关闭浏览器时删除：历史记录、Cookie 和网站数据、网页缓存、下载列表、网站设置（缩放、权限、弹窗、拦截例外、自动阅读器）、非书签网站的图标；同时清空系统 DNS 缓存和任务栏“最近”记录。
-
-- 历史记录只在内存中，从不写入磁盘。
-- 意外退出或被强制结束时，下次启动先补做清理。
-- 下载的文件不记录来源网址（保留 Windows“来自互联网”安全标记）。
-
-留在磁盘上的只有（`%LOCALAPPDATA%\UltraLightBrowser`）：书签、阅读列表、标签页组和设置；元素隐藏规则；书签网站的图标；浏览器内核的加密密钥；`warp\` 中的网络组件、WARP 账号和优选结果（不含任何浏览记录）。
-
-**拦截**：内置 230 多个常见国内外广告与统计域名，以及 Facebook / Google / YouTube / X 等网站上的广告与跟踪地址；第三方子框架、跟踪像素和 Service Worker 发出的请求同样过滤。
-
-- **广告位自动隐藏**：AdSense、Google 广告管理器、Taboola、Outbrain、百度联盟等广告位直接隐藏，不留空白；百度、知乎、微博、CSDN、B 站、搜狐、网易、豆瓣、新浪另有专门规则。
-- **YouTube**：去掉播放器数据里的广告，漏网的广告立即跳到结尾并点“跳过”；首页、侧栏和 Shorts 里的推广卡片隐藏。
-- **不弄坏网页**：被拦的 Google Analytics、gtag / GTM、Google 广告管理器、AdSense 脚本换成本地空壳，等待统计回调才跳转的链接和表单照常可用；直接打开统计服务自己的网站（如 mixpanel.com）时不拦截它本身。
-- 可对单个网站关闭（“此网站的设置”），请求拦截和广告位隐藏一起关闭；“⋯ → 内容拦截器”显示此页和本次共阻止的请求数。
-- WebView2 严格防跟踪；Ctrl+Shift+H 点选页面元素永久隐藏。
-
-## 下载
-
-前往 **[GitHub Releases 最新版](https://github.com/Freecode100Year/UltraLightBrowser/releases/latest)**，或下载站 **[dl.freedom8964.com](https://dl.freedom8964.com/)**（两边文件相同）：
-
-| 文件 | 说明 |
-| :--- | :--- |
-| `UltraLightBrowser-vX.Y.Z-Windows-x64.exe` | 单文件，双击运行 |
-| `SHA256SUMS.txt` | 校验值（下载页底部） |
-
-需要 Windows 10/11 x64 和 [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)（Windows 11 已自带）。
-
-**安卓版（测试版）** 也在同一个下载页，版本号与电脑版一致，需要 Android 8.0 及以上：
-
-| 文件 | 给谁用 |
-| :--- | :--- |
-| `…-Android-arm64-v8a-推荐大多数手机.apk` | **手机版，推荐**：近几年的绝大多数安卓手机 |
-| `…-Android-armeabi-v7a-老旧32位手机.apk` | 老旧的 32 位手机 |
-| `…-Android-universal-通用版.apk` | 通用版，所有手机和模拟器都能装，体积较大 |
-| `…-Android-x86_64-电脑模拟器.apk` | 电脑上的安卓模拟器，不是手机用的 |
-
-安卓 APK 在本地用固定的签名密钥签名，证书 SHA-256 为 `2e:a7:c1:5b:f9:86:31:19:ad:af:2b:b0:0f:20:1e:c0:5f:98:42:a8:63:1c:6c:fd:46:d1:e6:c5:48:ea:68:10`；以后的版本都用同一个密钥，可以直接覆盖升级。
-
-所有发布文件都从本仓库源码编译（Windows 版在 Linux 上用 clang-cl + Windows SDK 交叉编译，C 运行库静态链接，不用另装 VC++ 运行库）。下载后建议校验：
-
-```powershell
-Get-FileHash .\UltraLightBrowser-v2.10.1-Windows-x64.exe -Algorithm SHA256   # 与下载页的 SHA256SUMS.txt 对比
+```bash
+curl -fsSL https://raw.githubusercontent.com/Freecode100Year/UltraLightBrowser-Omarchy/main/install.sh | bash
 ```
 
-## 功能
+- **默认兼容 `mise` / `rustup` / 系统 `pacman` 工具链**（本机已有 `cargo` 与 `go` 时不会重复安装）。
+- **不打包 300MB+ 冗余内核**：动态链接 Arch 官方 `extra/cef`（`/usr/lib/cef/libcef.so`），随系统滚更获得安全更新。
+- **启动**：终端执行 `ulb-linux`（无痕模式 `ulb-linux --private`），或直接从 Omarchy / Walker 应用启动器打开 **UltraLightBrowser**。
+- **卸载**：
+  ```bash
+  sudo pacman -R ultralightbrowser-git
+  ```
 
-<p align="center">
-  <img src="docs/screenshot-start.jpg" width="400" alt="起始页">
-  <img src="docs/screenshot-reader.jpg" width="400" alt="阅读器">
-  <img src="docs/screenshot-overview.jpg" width="400" alt="标签页概览">
-  <img src="docs/screenshot-sidebar.jpg" width="400" alt="边栏与地址栏建议">
-</p>
+<details>
+<summary>手动克隆与自定义安装选项</summary>
 
-**标签页与窗口**
-- 紧凑式标签栏：当前标签即地址栏（网站域名 + 锁），其他标签显示图标和标题；悬停可关闭，可拖动排序，标签太多时显示“+N”
-- 标签页概览（Ctrl+Shift+\）：缩略图网格，可搜索、关闭、新建
-- 后台标签页自动挂起（默认 10 分钟，可设置），正在播放声音的标签不挂起；标签显示播放图标，点击即可静音
-- 多窗口、无痕浏览窗口（独立的 InPrivate 数据）；重新打开关闭的标签页
-- 链接右键菜单：在新标签 / 后台标签 / 无痕浏览窗口中打开，添加到阅读列表
+```bash
+git clone https://github.com/Freecode100Year/UltraLightBrowser-Omarchy.git
+cd UltraLightBrowser-Omarchy
 
-**统一菜单（右上角 ⋯）**
-- 新建标签页 / 窗口 / 无痕浏览窗口；书签、历史记录、下载、阅读列表
-- 显示阅读器、页内查找、缩放、打印
-- 此网站的设置、内容拦截器、声音、Cloudflare WARP、浏览器UA标识、节能
-- 全屏、设置、关于
+# 方式 A：使用本地脚本（自动处理依赖与 mise/pacman 工具链）
+bash install.sh
 
-**起始页、书签与历史**
-- 启动和新标签页默认打开 Brave 搜索（地址栏保持空白，标签显示“起始页”）；也可改用“个人收藏”页或空白页
-- 搜索引擎：Google（默认）、Brave、Bing、DuckDuckGo、Startpage、百度
-- 书签：文件夹、拖动排序、搜索；可导入 / 导出 HTML 书签（Chrome、Edge、Firefox、Safari 通用格式）
-- 历史记录：按天分组、搜索、删除单条或按时间段清除（仅本次运行期间）
-- 地址栏建议：输入时从书签和历史记录中匹配，↑↓ 选择
-- 标签页组（边栏）：把当前标签页存为一组，随时重新打开
+# 方式 B：标准 Arch PKGBUILD 打包安装（需通过 pacman 安装 rust 与 go）
+cd linux/packaging && makepkg -si
 
-**阅读器与查找**
-- 阅读器（Ctrl+Shift+R）：基于 Mozilla Readability 提取正文，四种主题、两种字体、可调字号；可设为对某网站自动启用；文章在严格的内容安全策略下显示，不执行网页脚本
-- 页内查找（Ctrl+F）：高亮全部匹配、显示“第几个 / 共几个”
+# 方式 C：仅本地 Release 编译运行（不安装到系统目录）
+go build -C warp -trimpath -o linux/target/release/ulb-warp .
+cargo build --manifest-path linux/Cargo.toml --locked --release -p ulb-linux
+./linux/target/release/ulb-linux
+```
 
-**速度**
-- 网页加载完成前不做阅读器检测、缩略图等附加工作，先让网页显示出来
-- 关闭 WARP 时可用“预先载入链接”：在起始页输入网址时提前下载该网页，指针停在同一网站的链接上时预先载入
+- 验证内核与 UA 标识自检：`ulb-linux --check`
+- 环境变量覆盖：`ULB_WARP_BIN` 可指定自定义 `ulb-warp` 路径。
 
-**音频**
-- 默认原声输出：不接管网页音频，可配合 Windows 空间音效 / Dolby Access 使用
-- 可选浏览器音频增强：对白、轻柔、标准、影院四种模式；人声增强、齿音抑制、夜间模式、单声道合并、音量放大（最高 300%）、真峰值限幅（-1 dBTP）
-- 输出设备“自动检测”：USB 解码器、蓝牙耳机、机箱前后面板耳机孔也能按设备名认出耳机；中途插拔耳机或在 Windows 里切换输出设备，耳机互馈随即开启或关闭，不用刷新页面
-- 播放诊断：音频增强状态、视频分辨率与放大倍数、缓冲余量、区间丢帧率与显示帧/秒
-- 显卡视频增强：NVIDIA RTX 超分与 RTX Video HDR、Intel 超分（需显卡驱动支持）
+</details>
 
-**节能**
-- 后台标签页按设置的时间自动挂起，切换回来时自动恢复；可立即挂起其他标签页
-- 可选：最小化时自动挂起网页（播放声音时除外）
+---
 
-**浏览器UA标识**
-- Microsoft Edge — Windows（默认）/ Microsoft Edge — macOS，对所有标签页生效，详见下文
+## 为什么选择 UltraLightBrowser-Omarchy
 
-## 安卓版（测试版）
+普通浏览器在 Linux 上往往带来这些问题：
+- 全局代理/VPN 会接管整台机器流量；代理断开时普通浏览器静默回落直连，WebRTC 与系统 DNS 仍可能泄露真实 IP。
+- 浏览器长期在 `~/.config` / `~/.cache` 残留历史、Cookie、缓存、下载记录。
+- 网页套壳浏览器在 Wayland HiDPI 下内存与重绘开销高，无法融入原生 GTK4 / Hyprland 桌面。
 
-界面仿照 Safari：地址栏和按钮在屏幕下方，标签页以卡片网格显示。网络组件与电脑版相同（`warp/`），以本机 SOCKS5 代理的方式只给这个浏览器用，**不需要 VPN 权限**，不影响手机上的其他 App。
+**UltraLightBrowser-Omarchy** 将这些能力整合为一个原生 GTK4 + PipeWire 外壳与 Go 用户态隧道进程：
+- **单浏览器独立加密线路**：默认开启 Cloudflare WARP，也可切换内置公益线路或自选订阅（VLESS / Trojan / VMess / Shadowsocks / Hysteria2），完全不改系统路由、不需 root 权限。
+- **零痕迹 `tmpfs` 会话**：CEF `--user-data-dir` 仅创建在 `$XDG_RUNTIME_DIR/ulb-session-<pid>`（内存文件系统），退出自动清扫；异常强杀后下次启动按 PID 自动补删残留目录。
+- **原生仿 macOS Safari 外壳**：`gtk4-rs` + Cairo/Pango 自绘单行紧凑标签栏即地址栏、线条图标、原生 `⋯` 菜单、阅读器、标签页概览、实时边栏与 Wayland 2x HiDPI 缩放支持。
 
-- **网络线路**：Cloudflare WARP（默认）、内置公共线路（需要 IPv6）、自己的线路和订阅（导入、测速、自动选择）、直接连接；切换立即生效，不用重启。
-- **自己的线路**：与电脑版相同的链接格式（含 Hysteria2 和 gRPC）；另外可从文件导入单个 Peer 的 WireGuard `.conf`（需包含 `DNS`，且 DNS 地址在 `AllowedIPs` 内）。
-- **线路不通时不联网**；手机的 Android System WebView 太旧、不能安全使用代理时，**拒绝打开网页**，而不是直接连接。
-- 禁用 WebRTC（防止泄露真实 IP），关闭 Google 安全浏览和 WebView 使用统计；关闭浏览器时清除 Cookie、网站数据和缓存。
-- **用户脚本**：菜单“用户脚本…”导入 `.user.js` 或 `.js`，支持 `@match`、`@include`、`@exclude`、`@run-at`、`@noframes` 和 `GM_info`、`GM_getValue` / `GM_setValue`、`GM_deleteValue`、`GM_addStyle`；普通 `.js` 导入时填写运行网址。
-- **还不支持**：Chrome 扩展（安卓 WebView 没有扩展接口）、下载文件（系统下载器会绕过线路，目前只复制下载链接）、摄像头 / 麦克风 / 定位、用户脚本的 `@require`、`@resource`、跨域 GM 请求。
+---
 
-构建方法见 [android/README.md](android/README.md)。
+## 核心特性
 
-## 扩展程序和用户脚本（v2.8.0）
+### 1. 网络与隐私隔离（`warp/` + `ulb-cef`）
 
-菜单 **“⋯ → 扩展和脚本…”**（或“设置 → 扩展程序 / 用户脚本”）。
+浏览器提供三种网络模式，可在右上角 **「⋯ → 网络线路」** 或 **「设置 → 网络」** 中切换：
 
-**扩展程序（Chrome / Edge 扩展）**
-- **加载已解压的扩展…**：选择里面有 `manifest.json` 的文件夹。
-- **安装 .crx / .zip…**：选择扩展安装包。
-- 有弹出页或选项页的扩展，可在列表里点“打开”“选项”，在新标签页中打开；可随时停用、删除。
-- 扩展只在普通窗口运行，不在无痕窗口运行。
-- 浏览器每次关闭都会删除网页数据（见“关闭即清除”），所以**扩展自己保存的设置和数据也会在关闭时清除**，扩展本身保留，下次启动自动重新加载。
-- 由微软 WebView2 运行扩展，部分扩展用到 WebView2 不支持的功能，可能无法加载，列表里会显示原因。
-- **会接管网络代理的扩展**（例如 VPN 扩展）在列表里有黄色提示：开着它时，ULB 自己的 WARP / 我的线路不再生效。
+| 模式 | 出口 IP | 域名解析 | 断线行为 |
+| :--- | :--- | :--- | :--- |
+| **Cloudflare WARP**（默认） | Cloudflare 分配地址（每 3 天自动轮换 IPv6） | 隧道内 Cloudflare DNS | 默认可配置；勾选「WARP 断开时阻止联网」即**物理占口拒连**，绝不漏直连 |
+| **我的线路**（公益线路 / 自选订阅） | 线路服务器出口 | 线路服务器远端解析 | **一律阻止联网**，从不直连 |
+| **直接连接** | 本机真实 IP | 系统 DNS | — |
 
-**推荐扩展（v2.10.0）**
+- **防泄露强制约束**：启动 CEF 时注入 `--proxy-server=socks5://127.0.0.1:<port>`、`--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1` 以及禁用非代理 UDP WebRTC 直连。
+- **断线防抢占端口**：启用「阻止联网」或「我的线路」时，若 `ulb-warp` 意外退出，Rust 端立即绑定原 loopback 端口并拒绝连接，彻底防止流量漏出。
+- **自选线路与订阅**：支持 `vless://`、`trojan://`、`vmess://`、`ss://`（含 2022）、`hysteria2://` / `hy2://`（支持 TCP / WS / HTTPUpgrade / XHTTP / gRPC、TLS / REALITY），支持测速与自动选优；拒绝 `allowInsecure` / `insecure=1` 链接。
+- **本地加密保存**：线路与订阅使用 `ChaCha20-Poly1305` 加密保存在 `~/.local/share/ultralight/lines.dat`（密钥 `lines.key` 权限 `0600`）。
 
-“设置 → 扩展程序”下方有一个推荐列表，点「安装」即可：
+### 2. macOS Edge 浏览器标识（Linux 默认开启）
 
-| 扩展 | 用途 | 来源 |
-|---|---|---|
-| Global Speed | 调整所有网站视频、音频的播放速度 | Chrome 网上应用店 |
-| Proton VPN | 开源 VPN 扩展，需要 Proton 账号；会接管代理，安装前会提醒 | Chrome 网上应用店（GPL-3.0） |
+在保留系统 CEF 真实 Chromium 主版本号的前提下，统一改写多层指纹并在首请求发出前生效：
 
-- 想用油猴 / 篡改猴脚本：用 ULB 自带的「用户脚本」导入 `.user.js` 即可。篡改猴、暴力猴这类脚本管理扩展 WebView2 加载不了（已在 Windows 上实测暴力猴 2.50：无法加载）。
-- ULB 安装包里不带这些扩展：点「安装」时才从官方来源下载，下载走 ULB 当前的线路（线路没连上时不下载，不会绕过线路）。
-- 下载后先校验再安装：检查开发者签名和扩展 ID，对不上就丢弃。
-- 没有收录 Hola VPN（曾被曝出把用户的网络出口转卖给别人用，且闭源）和新版篡改猴（闭源，不允许转发）。需要的话仍可自己用“安装 .crx / .zip…”加载。
+- **HTTP / JS UA**：`Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ... Chrome/<ver> Safari/537.36 Edg/<ver>`
+- **Client Hints（`Sec-CH-UA-*` / `navigator.userAgentData`）**：平台 `macOS`、版本 `27.2.0`（可在 `~/.config/ultralight/config.json` 的 `settings.macPlatformVersion` 调整）、架构 `arm`、64 位与真实 GREASE 品牌表。
+- **WebGL / WebGPU / Worker / 滚动条**：会话级 M1/M2/M3/M4 GPU 与核心数画像、WebGPU `apple` · `metal-3`、Dedicated/Service Worker 同步改写、隐藏 SharedWorker、0px 悬浮滚动条。
+- **内置自检页**：菜单 **「⋯ → 浏览器UA标识 → 检查当前浏览器UA标识…」**（`https://ulb.internal/selftest.html`）。
 
-**用户脚本（油猴 / Tampermonkey 脚本）**
-- **导入脚本文件…** 或 **粘贴脚本…**：支持带 `==UserScript==` 头的 `.user.js`，也可以是普通 JavaScript（导入时填写在哪些网站运行，例如 `https://example.com/*`）。
-- 支持 `@match`、`@include`、`@exclude`、`@run-at`、`@noframes`，以及常用的 `GM_addStyle`、`GM_getValue` / `GM_setValue`、`GM_xmlhttpRequest`、`GM_openInTab`、`GM_setClipboard` 和 `GM.*`。
-- 不支持 `@require`、`@resource`（不会从网上下载代码）；`GM_xmlhttpRequest` 受网站跨域限制。
-- 每个脚本单独运行，一个脚本出错不影响其他脚本和网页；浏览器自己的页面（设置、起始页等）不会运行脚本。新装或停用后刷新网页生效。
+### 3. 广告拦截、阅读器与六四事件离线档案
 
-**只安装你信任的扩展和脚本**：它们能读取和修改你打开的网页。
+- **Rust 规则引擎（`rust/adblock`）**：拦截 230+ 广告与统计域名、第三方跟踪像素及 Service Worker 请求，自动将常见统计脚本替换为无害空壳，支持单站开关与 `Ctrl+Shift+H` 点选隐藏页面元素。
+- **阅读器 & 原生面板**：基于 Mozilla Readability 的严格 CSP 阅读器、书签/文件夹与 Netscape HTML 导入导出、内存历史记录、标签页概览与边栏。
+- **六四事件（离线版）**：位于菜单 **「⋯ → 六四事件（离线版）」**，运行在隔离源 `https://f8964.internal/`（无桥接权限）。如需包含离线数据包，可用 `python tools/pack_f8964.py ~/.local/share/ultralight/f8964.pack` 生成后放入数据目录或二进制同级目录。
 
-## macOS Edge 伪装
+### 4. PipeWire 音频检测与 Web Audio DSP
 
-切换到 macOS 身份后，Edge UA、Client Hints、`navigator.platform`、WebGL 显卡标签和逻辑线程数使用同一套会话画像。改写通过 DevTools 协议在内核层完成，首个页面请求发出前就已生效；宿主的真实渲染和网络信号仍保留，见下方局限。
+- **PipeWire 热插拔检测**：通过 `libpipewire` 实时监听默认输出设备，自动区分耳机（含蓝牙 / USB DAC）与音箱/线路并动态切换耳机互馈（Crossfeed）。
+- **可选浏览器音频增强**：支持原声直通或对白 / 轻柔 / 标准 / 影院四种模式、人声增强、齿音抑制、夜间防突响、单声道合并、最高 300% 音量放大与 `-1 dBTP` 真峰值限幅器。
 
-| 检测面 | macOS 模式下的值 |
-| :--- | :--- |
-| `User-Agent` 请求头 / `navigator.userAgent` | `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) … Edg/<本机内核版本>`，只替换系统段，版本号与内核一致 |
-| Client Hints（`Sec-CH-UA-*`）/ `navigator.userAgentData` | 平台 `macOS`、版本 `27.2.0`（macOS 27.2）、架构 `arm`、64 位；品牌列表和 Edge 完整版本号取自本机 WebView2 内核实测值（去掉 WebView2 特有的品牌项） |
-| `navigator.platform` | `MacIntel` |
-| WebGL / WebGPU 显卡信息 | macOS 模式下从 M1/8、M2/8、M3/8、M4/10 的配套画像中按进程随机选择 WebGL 显卡标签与 `navigator.hardwareConcurrency`；WebGPU 报告 `apple` · `metal-3` |
-| 语音列表 | 隐藏 Windows 本地语音，只保留在线语音 |
-| 滚动条 | 隐藏（与 macOS 默认的悬浮滚动条一致，不占布局宽度） |
-| 跨进程 iframe、Dedicated Worker、Service Worker | 同样改写 UA、Client Hints 和 `platform`；Worker 的逻辑线程数与页面画像一致 |
-| SharedWorker | 无法改写，macOS 模式下隐藏该接口 |
+### 5. Chrome 扩展程序与用户脚本
 
-被改写的函数调用 `toString()` 时仍显示为原生代码（`[native code]`）。macOS 模式下停用预先载入，因为预取请求不经过伪装，会暴露 Windows 和 WebView2。
+- 支持加载已解压扩展文件夹、`.crx` / `.zip` 扩展包，以及设置页内置推荐扩展（Global Speed、Proton VPN；CRX3 校验后经当前线路下载）。
+- 扩展本体持久化在 `~/.local/share/ultralight/extensions/`，扩展运行期数据随 `tmpfs` 会话目录在退出时一并销毁。
+- 内置用户脚本引擎，支持导入 `.user.js` 或普通 JS 及常用 `GM_*` API。
 
-**自检**：菜单“⋯ → 浏览器UA标识 → 检查当前浏览器UA标识…”列出上述各项以及 Dedicated/Service Worker 中的实际取值，并在 OffscreenCanvas/WebGL 可用时比较 Dedicated Worker 与页面的 GPU 标签；不一致项或不可验证项会标出。请求头与字体请另用 [BrowserLeaks](https://browserleaks.com/) 等站点核对。
+---
 
-**系统版本号**：默认报告 macOS `27.2.0`，可在 `%LOCALAPPDATA%\UltraLightBrowser\config.json` 的 `settings.macPlatformVersion` 中修改（仅允许数字和点）。从旧版本升级时，原先保存的默认值 `26.2.0` 会自动迁移到 `27.2.0`，其他自定义值不变。
+## 数据存储与零痕迹边界
 
-**会话画像**：选择 macOS Edge 身份后，本次浏览器进程的所有标签页共用同一 GPU/核心数画像；重新启动时从四种配置中重新抽取，因此不同会话也可能抽到相同配置。Canvas / WebGL 像素、音频读回和真实宿主 GPU 渲染保持原样，自检页会说明这些值可能暴露 Windows 宿主。
+| 位置 | 内容 | 生命周期 |
+| :--- | :--- | :--- |
+| `$XDG_RUNTIME_DIR/ulb-session-<pid>` | CEF 会话数据、Cookie、缓存、解包的离线快照 | 仅本次运行（`tmpfs`），退出即删，启动时清理死 PID 目录 |
+| `$XDG_RUNTIME_DIR/ulb.sock` | 单实例唤起与打开链接 Unix Socket | 随实例退出清理 |
+| `~/.config/ultralight/config.json` | 浏览器偏好、UA 身份、元素隐藏规则 | 持久化 |
+| `~/.local/share/ultralight/` | 书签、阅读列表、标签页组、加密 `lines.dat`、扩展安装包、用户脚本、WARP 账号缓存 | 持久化（不含浏览历史） |
 
-**局限**：无法改变系统字体（字体探测可区分 Segoe UI / 微软雅黑 与 PingFang 等）、Emoji、Canvas / WebGL 的实际渲染结果、音频读回、网络连接指纹或真实屏幕参数。专业指纹检测仍可能识别出 Windows，而“伪装过”本身也是一种特征。非必要请保持默认的 Windows 模式。
+---
 
 ## 快捷键
 
 | 按键 | 功能 |
 | :--- | :--- |
-| Ctrl+T / Ctrl+W | 新建 / 关闭标签页 |
-| Ctrl+Shift+T | 重新打开关闭的标签页 |
-| Ctrl+Shift+W | 关闭窗口 |
-| Ctrl+Tab / Ctrl+Shift+Tab | 下一个 / 上一个标签页 |
-| Ctrl+1…8 / Ctrl+9 | 切换到第 N 个 / 最后一个标签页 |
-| Ctrl+N / Ctrl+Shift+N | 新建窗口 / 无痕浏览窗口 |
-| Ctrl+L / Alt+D / F6 | 聚焦地址栏 |
-| Ctrl+R / F5 | 刷新 |
-| Alt+← / Alt+→ / Alt+Home | 后退 / 前进 / 主页 |
-| Ctrl+F，F3 / Shift+F3 | 页内查找，下一个 / 上一个 |
-| Ctrl+Shift+R | 阅读器 |
-| Ctrl+D / Ctrl+Shift+D | 添加书签 / 添加到阅读列表 |
-| Ctrl+Shift+B / Ctrl+H / Ctrl+J | 书签 / 历史记录 / 下载 |
-| Ctrl+Shift+L | 边栏 |
-| Ctrl+Shift+\ | 标签页概览 |
-| Ctrl+, | 设置 |
-| Ctrl+加号 / 减号 / 0 | 放大 / 缩小 / 实际大小 |
-| F11 / Esc | 进入 / 退出全屏 |
-| Ctrl+Shift+H | 元素隐藏 |
+| `Ctrl+T` / `Ctrl+W` | 新建 / 关闭标签页 |
+| `Ctrl+Shift+T` | 重新打开上次关闭的标签页 |
+| `Ctrl+L` | 聚焦地址栏 |
+| `Ctrl+F` | 页内查找 |
+| `Ctrl+R` / `F5` | 刷新当前标签页 |
+| `F11` | 进入 / 退出全屏 |
+| `Esc` | 取消地址栏聚焦并关闭联想弹窗 |
+| `Ctrl+N` / `Ctrl+Shift+N` | 新建窗口 / 无痕窗口菜单项（命令行可用 `--private`） |
+| `Ctrl+D` / `Ctrl+Shift+D` | 添加书签 / 添加到阅读列表 |
+| `Ctrl+Shift+B` / `Ctrl+H` | 书签 / 历史记录 |
+| `Ctrl+Shift+L` / `Ctrl+Shift+\` | 边栏 / 标签页概览 |
+| `Ctrl+Shift+R` | 阅读器 |
+| `Ctrl+0` / `Ctrl++` / `Ctrl+-` | 实际大小 / 放大 / 缩小 |
+| `Ctrl+,` | 打开设置 |
 
-## 已知限制
-
-- 因为关闭即清除缓存，重新启动后第一次打开网站不会比首次访问更快。
-- 界面没有动画效果（GDI+ 绘制）；标签页组为“保存并重新打开”的简化方式，不会像 Safari 那样整组切换窗口。
-- 内置页面（起始页、历史、书签等）在 `https://ulb.internal/` 下显示，网页无法跳转或嵌入这些页面。
-- 浏览器音频增强基于 Web Audio：跨域且未开放 CORS 的媒体、DRM 加密视频（如 Netflix）不会被处理；切换原声 / 增强模式会刷新页面。真峰值限幅器需要网页允许加载 blob: 模块，不允许的网站改用压缩保护。
-- 不包含 Dolby 解码器或任何 Dolby 授权技术，不保证 Atmos 输出或比特流直通。
-
-## 从源码构建
-
-需要 Windows、Visual Studio 2022（C++ 桌面开发）、NuGet、CMake 3.25+、Rust stable（Cargo）和 Go（版本见 `warp/go.mod`）。
-
-```powershell
-.\build-windows.ps1          # 输出 dist\Release\UltraLightBrowser.exe
-```
-
-或手动：
-
-```powershell
-go build -C warp -trimpath -ldflags "-s -w -buildid=" -o bin/ulb-warp.exe .   # WARP 组件，作为资源嵌入 exe
-nuget restore packages.config -PackagesDirectory packages
-cmake -B build -S . -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Release
-```
-
-更多说明见 [FULL_VERSION_GUIDE.md](FULL_VERSION_GUIDE.md)，测试见 [tests/README.md](tests/README.md)。
+---
 
 ## 项目结构
 
 ```text
-src/
-├── main.cpp                 入口、DPI 初始化、启动清理
-├── AppShell.*               窗口管理、共享 WebView2 环境、退出清理
-├── MainWindow.cpp           窗口消息、地址栏与建议、查找栏、全屏
-├── MainWindowTabs.cpp       标签页生命周期、挂起、缩略图、阅读器、预先载入
-├── MainWindowPaint.cpp      标题栏 / 标签栏布局与绘制、鼠标交互
-├── MainWindowMenus.cpp      “⋯”菜单、分享菜单、标签右键菜单
-├── MainWindowPages.cpp      边栏 / 总览面板，内置页面的消息接口
-├── Library.*                书签、阅读列表、历史（内存）、标签页组、网站设置（内存）
-├── InternalPages.*          内置页面资源、阅读器与查找脚本
-├── Icons.*                  线条图标（标题栏与菜单）
-├── WebViewManager.*         WebView2 环境与标签页、痕迹清除、音频增强、标识切换
-├── WarpManager.*            启动和监控 WARP 组件，线路加密保存
-├── LineStore.*              我的线路：线路列表、订阅、选择（可单元测试）
-├── UserScripts.*            用户脚本：元数据、网址规则、注入脚本（可单元测试）
-├── ExtensionPackage.*       扩展包：manifest.json、.crx 解析（可单元测试）
-├── Extensions.*             扩展程序：安装、每次启动重新加载（WebView2）
-├── AdBlockRules.*           Rust 规则引擎的 C++ 桥接、广告位隐藏与页面脚本
-rust/adblock/                Rust 广告 / 跟踪规则、URL 匹配和请求路由模式
-├── NativeRequestFilter.*    广告 / 跟踪请求拦截（WebView2 接入）
-├── ElementBlocker.*         元素隐藏
-├── PowerManager.*           后台节能与 EcoQoS
-├── UserAgent.hpp / MacStealth.hpp / SelfTestPage.hpp   macOS 标识
-└── Config.*                 设置读写
-warp/                        网络组件（Go）：WARP 注册与 3 天换号、WireGuard 隧道、IP 优选、线路（Xray，links.go 解析分享链接，quic_line.go Hysteria2，wireguard_profile.go WireGuard 配置）、自动选择与入口地址轮换（rotate.go）、测速与订阅（modes.go）、安卓 DNS 与证书（dns.go）、本机 SOCKS5
-android/                     安卓版（Java）：WebView 经 ProxyController 走网络组件、仿 Safari 界面、线路管理、用户脚本
-server/ulb-line-ipv6.sh      线路服务器脚本：每 3 天更换入口 IPv6 地址（systemd 定时器）
-ui/                          内置页面（起始页、历史、书签、设置、总览、边栏、阅读器）
-ui/vendor/                   Mozilla Readability（Apache-2.0）
-tools/pack_f8964.py          打包 freedom8964.com 离线快照（起始页「六四事件（离线版）」）
-tests/                       单元测试、页面资源检查、Windows 界面冒烟测试、性能测试
+├── install.sh                 Omarchy / Arch Linux 一键 curl 安装脚本
+├── linux/
+│   ├── Cargo.toml             Linux Rust 工作区
+│   ├── ulb-core/              纯 Rust 核心（配置、书签/历史、线路、用户脚本、扩展解包、UA/Stealth、Audio DSP、UI RPC 桥、WARP 托管）
+│   ├── ulb-cef/               系统 extra/cef (156.x) FFI 绑定、OSR、代理隔离、自定义协议、Client Hints 覆盖
+│   ├── ulb-linux/             GTK4 原生外壳、Cairo/Pango 标签栏、PipeWire 耳机监听、Wayland HiDPI、单实例控制
+│   └── packaging/             Arch Linux PKGBUILD、.desktop 桌面入口、SVG 图标
+├── warp/                      Go 用户态网络组件（Cloudflare WARP / WireGuard / Xray / 测速 / 订阅）
+├── rust/adblock/              共享 Rust 广告与跟踪拦截引擎
+├── ui/                        内置页面（起始页、设置、书签、历史、概览、边栏、阅读器）
+├── server/                    自建轮换 IPv6 线路服务端脚本
+├── tools/                     freedom8964.com 离线快照打包工具
+├── src/ & android/            上游 Windows (WebView2) 与 Android 共享/同源实现
 ```
 
-## 最近更新
+---
 
-- **v2.10.1**：日常维护：
-  - 网络组件升级 `Xray-core`、`xtls/reality`、`quic-go`、`golang.org/x/net`（v0.63.0）及 `gorilla/websocket`，修复 `govulncheck` 报告的 `GO-2026-6278`（WebSocket 掩码密钥使用弱随机数），`govulncheck` 已无已知漏洞。
-  - 线路链接解析同时拒绝 `insecure=1` / `insecure=true`（与 `allowInsecure` 一致），补全 `LineStore::ProtocolOf` 与设置页导入提示对 `hysteria2://` / `hy2://` 的支持并补充单元测试。
-  - 修复 Rust 广告拦截 FFI 函数的 `clippy` 安全文档警告；Android Gradle 插件更新至 `9.5.3`；更新 README 下载徽章版本。
-- **v2.10.0**：“设置 → 扩展程序”新增「推荐扩展」：Global Speed（视频变速）和 Proton VPN，一键从 Chrome 网上应用店下载、校验签名后安装（已在 Windows 上实测能加载）；会接管网络代理的扩展在列表里有提示。篡改猴脚本请用自带的「用户脚本」。
-- **v2.9.2**：原 GitHub 账号停用，项目搬到 GitLab（https://gitlab.com/sj9292008133/UltraLightBrowser），安装包改由 https://dl.freedom8964.com 下载；「关于」里的项目链接随之更新。Windows 版改为静态链接 C 运行库，没装 VC++ 运行库的电脑也能直接运行。
-- **v2.9.1**：修复 v2.9.0：
-  - 安卓 APK 重新用固定密钥签名（v2.9.0 的安卓 APK 没有签名，无法安装）。
-  - Hysteria2 改用 Xray 自带的实现，去掉 sing-box：v2.9.0 的 Hysteria2 在安卓 App 里发不出数据（sing-box 需要安卓禁止应用使用的 netlink），现已在安卓 App 的沙盒里实测连通（含 Salamander 混淆）；网络组件减小约 18 MB（Windows 版 45 MB → 约 37 MB 级别），也不再带有 GPL 许可的组件。
-  - 不再支持 TUIC（只有 sing-box 实现，且同样无法在安卓上运行）。
-  - 修复 sing-box 依赖带来的 brotli 已知漏洞（GO-2026-6888）。
-  - 修复 v2.9.0 的网络组件单元测试失败，恢复完整的 README（v2.9.0 误删了大部分说明和更新记录）。
-- **v2.9.0**：安卓版新增 Hysteria2 / TUIC 线路、gRPC 传输、WireGuard `.conf` 导入和用户脚本；电脑版的网络组件同时支持 gRPC 传输和 Hysteria2 链接。
+## 许可证与致谢
 
-- **v2.8.0**：
-  - **自定义网络线路**：可添加多条线路，支持 VLESS / Trojan / VMess / Shadowsocks（含 2022），传输 TCP / WebSocket / HTTPUpgrade / XHTTP，安全 TLS / REALITY；支持订阅、一键测速、自动选择最快线路（断开时自动切换）。线路加密保存，旧版导入的线路自动迁移。网络组件体积 17.8 → 19.8 MB。
-  - **Chrome / Edge 扩展**：加载解压后的扩展文件夹，或安装 .crx / .zip；每次启动自动重新加载。
-  - **用户脚本**：导入油猴脚本或普通 JavaScript，按网址规则自动运行，提供常用 GM_* 接口。
-  - 修复书签、个人收藏、新建文件夹等对话框里输入框显示成 “[object HTMLLabelElement]” 文字的问题。
-  - 菜单新增“扩展和脚本…”和“网络线路 → 管理我的线路…”。
-
-- **v2.7.3**：日常维护：WARP 隧道组件 wireguard-go 升级到最新版，包含作者的两个修复（握手时的一个竞态问题、接收数据包时一个长度计算溢出）。同时把内置公共线路服务器的 Xray 升级到 v26.11.9，固定地址和 3 天轮换地址都已实测可用。
-
-- **v2.7.2**：日常维护：网络组件升级 Xray-core 到 v26.11.9，并升级 golang.org/x/net 等依赖，修复 govulncheck 报告的 8 个会被调用到的已知漏洞（HTTP/2、Xray、压缩库）；编译器固定为 Go 1.27.4。WARP 注册、隧道、3 天换号和「我的线路」均已实测。网络组件体积从 20.2 MB 降到 17.8 MB。另外链接 Windows 的 synchronization.lib：新版 Rust 标准库用到了其中的 WaitOnAddress，不加会导致编译失败。
-
-- **v2.7.1**：「六四事件（离线版）」入口加到右上角「⋯」菜单最上方，一点就打开。v2.7.0 只把入口放在「个人收藏」页上，而默认的起始页是 Brave 搜索，所以大多数人看不到。
-
-- **v2.7.0**：起始页新增 **「六四事件（离线版）」**：内置 freedom8964.com 的离线快照（简体 / 繁體 / English），不联网也能看；每页标明快照日期并可跳转在线最新版。快照使用独立的内部地址，不能调用浏览器功能。exe 增大约 4.6 MB（zip 约 0.8 MB）。
-
-- **v2.6.1**：网络组件下载大文件或看视频后，会把用完的内存还给系统。实测下载 100MB 后，组件内存从一直停在 100–120MB 降到约 35MB；下载速度和 CPU 占用不变（限制内存上限的做法实测会让下载慢 25%–35%，所以没有采用）。
-
-- **v2.6.0**：
-  - **WARP 每 3 天自动换出口 IPv6**：到期自动注册新账号；先建好、测通新隧道再切换，旧隧道保留 2 分钟，已打开的网页不断线（实测换号期间连续访问无一失败）；注册失败时沿用原账号，1 小时后重试。
-  - **WARP 注册接口更新**：改用 WARP for Android 6.38.9（`v0a5641`）的注册方式，原来 2021 年的 6.11（`v0a2158`）保留作后备；两种方式均已实测注册、连通。
-  - **我的线路：入口 IPv6 每 3 天自动更换**：内置公共线路按 UUID 和 3 天周期算出当期入口地址；同时测试本期、上期和固定地址，取最靠前的可用地址；运行中当前地址失效时自动切换，新周期开始时自动换到新地址。导入的链接加 `&rotate6=<前缀/64>` 也可使用。
-  - **新增服务器脚本** `server/ulb-line-ipv6.sh`：一条命令安装 systemd 定时器，自动添加 / 删除轮换地址，并检查 Xray 是否监听所有地址；`--dnat-to` 转发模式适用于 Xray 只监听固定地址的服务器。内置公共线路的服务器已启用。
-  - 网络组件新增单元测试（地址算法与服务器脚本逐位一致、周期边界、候选顺序），CI 开始运行 `go test`。
-
-- **v2.5.3**：广告与跟踪规则核心改用 Rust 实现，覆盖域名、路径判定和 WebView2 请求路由模式生成；保持既有拦截策略与页面替身脚本行为，新增 Rust/C++ 生产桥接测试。
-- **v2.5.2**：macOS Edge 身份模式新增会话级配套画像：每次启动抽取一组 GPU 标签与核心数，页面、iframe 和 Worker 共用；自检页说明真实宿主 GPU、Canvas/WebGL 像素与音频读回仍可能暴露运行环境。
-- **v2.5.1**：音频：修正输出设备“自动检测”——以前 Windows 只要报告设备类型不是耳机就直接当扬声器，按设备名识别耳机的逻辑从未生效，USB 解码器、蓝牙耳机和多数主板耳机孔都被当成扬声器；现在类型不明确时再看设备名，并识别 Handset 类型。插拔耳机、连接蓝牙耳机或切换默认输出设备时自动重新检测，已打开的网页无需刷新。影院模式的房间混响改为固定种子生成，左右声道去相关、高频随时间衰减，去掉尾音里的“嘶嘶”声，每次音色一致，响度不变。真峰值限幅器遇到 NaN / 无穷大输入样本时置零，不再输出异常值。
-- **v2.5.0**：升级广告拦截：自动隐藏常见广告位（含百度、知乎、微博、CSDN、B 站等专门规则）；YouTube 视频广告去除并自动跳过；新增 Facebook 像素、Google 转化、YouTube 广告统计、X 转化等按地址拦截，域名增至 230 多个，Service Worker 的请求也会过滤；被拦的统计和广告脚本换成本地空壳，避免链接点不动、页面报错；打开统计服务自身网站时不再拦截它；每个标签页注册的请求过滤器减少约四成；菜单显示此页阻止数；对单个网站关闭时广告位隐藏一并关闭并立即生效。拦截规则抽成独立模块并加入 Linux 单元测试。
-- **v2.4.4**：macOS Edge 浏览器标识默认报告 macOS 27.2（Client Hints `27.2.0`）；旧版保存的默认版本自动迁移，自定义平台版本保留。
-- **v2.4.3**：移除机械罗盘图标外围白底与阴影，使用透明背景并收紧留白，重新生成各尺寸 Windows 程序图标。
-- **v2.4.2**：更新为新的机械罗盘程序图标，EXE、窗口和任务栏使用同一组多尺寸图标；同步项目展示图标。
-- **v2.4.1**：修复书签 HTML 导入：正确解析属性空格、制表符和完整属性名，避免把 DATA-HREF 或标题中的文字误当网址；按标准标记识别不同语言的收藏栏；超长网址不再虚报导入成功。新增覆盖以上情况的回归测试。
-- **v2.4.0**：新增「显卡视频增强」（设置 → 高级，默认开）：让 NVIDIA RTX 显卡做视频超分辨率和 SDR 转 HDR、Intel 显卡做超分；需在 NVIDIA App 里开启，接电源、画面被放大时生效。「播放诊断」显示视频放大倍数。
-- **v2.3.0**：音频增强的最后一级换成真峰值限幅器：采样点和采样点之间的峰值都压在 -1 dBTP 以下，音量放大到 300% 也不会削波破音；约增加 4ms 延迟。少数安全策略严格、不允许加载的网站自动改用原来的压缩保护，「播放诊断」会显示用的是哪一种。
-- **v2.2.3**：我的线路未连接时显示原因（本机没有 IPv6 / 连不到入口服务器 / 链接失效），便于排查。
-- **v2.2.2**：公共线路更换伪装站点（Xray 提示以 Apple 为目标易被封锁），旧版本的公共线路已停用，请更新。
-- **v2.2.1**：“我的线路”内置公共线路，未导入链接时也可直接使用；“用户代理”改称“浏览器UA标识”。
-- **v2.2.0**：新增“我的线路”：可导入自己的 VLESS + REALITY 服务器链接，菜单和设置中可在直接连接、Cloudflare WARP、我的线路之间切换；线路不通时一律不直接联网；链接经 Windows DPAPI 加密保存在本机。内置 Xray 内核使 exe 增大约 10MB。
-- **v2.1.4**：审计修复：开启“WARP 断开时阻止联网”后，即使 WARP 组件根本无法启动（被杀毒软件拦截、文件损坏等），也不再直接联网；首次启动等待 WARP 组件的时间从 3 秒延长到 8 秒（新解压的组件可能正被杀毒软件扫描）；WARP 组件重启与浏览器退出同时发生时不再可能遗留组件进程或重复关闭句柄；保留下来的旧浏览器配置也会补上 WebRTC 防泄露设置；书签等资料写入磁盘失败后，下次保存或退出时会重试，不再丢失。
-- **v2.1.3**：审计修复：WARP 入口测速使用与 WireGuard 相同精度的握手时间戳，并在切换入口前稍作等待，避免切换后的首次握手被服务器当作重放丢弃而断流几秒；第二个浏览器进程中点“重新优选 IP”会提示无法优选，不再假装已开始；`build-windows.ps1` 和编译说明补上 WARP 组件的编译步骤（之前按说明从源码编译会失败）；自述文件重写。
-
-完整记录见 [GitHub Releases](https://github.com/Freecode100Year/UltraLightBrowser/releases)；源码同步在 [GitLab](https://gitlab.com/sj9292008133/UltraLightBrowser)，安装包也在 [dl.freedom8964.com](https://dl.freedom8964.com/)。
-
-## 许可证
-
-[MIT](LICENSE)。阅读器使用 [Mozilla Readability](https://github.com/mozilla/readability)（Apache-2.0，见 `ui/vendor/Readability-LICENSE.md`）。Safari 是 Apple Inc. 的商标，本项目与 Apple 无关；Dolby、Dolby Atmos 为其权利人的商标。
-
-
-## 第三方组件
-
-- 网络组件（`warp/`）使用 [wireguard-go](https://git.zx2c4.com/wireguard-go)（MIT）、[gVisor](https://gvisor.dev) 网络栈（Apache-2.0）和 [Xray-core](https://github.com/XTLS/Xray-core)（MPL-2.0）。WARP 是 Cloudflare 的服务，本项目与 Cloudflare 无关。
+- 基于 [MIT 许可证](LICENSE) 开源；本项目同步自上游 [Freecode100Year/UltraLightBrowser](https://github.com/Freecode100Year/UltraLightBrowser)。
+- 阅读器基于 [Mozilla Readability](https://github.com/mozilla/readability)（Apache-2.0，见 `ui/vendor/Readability-LICENSE.md`）。
+- 网络组件（`warp/`）使用 [wireguard-go](https://git.zx2c4.com/wireguard-go)（MIT）、[gVisor](https://gvisor.dev)（Apache-2.0）和 [Xray-core](https://github.com/XTLS/Xray-core)（MPL-2.0）。
+- Safari 为 Apple Inc. 商标，WARP 为 Cloudflare 服务，本项目与两者均无关联。
