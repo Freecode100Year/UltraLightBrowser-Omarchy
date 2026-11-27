@@ -393,6 +393,9 @@ fn draw_centered_text(cr: &Context, r: Rect, text: &str, size: f64, rgba: (f64, 
         return;
     }
     let _ = cr.save();
+    // Cairo paths are not part of the save/restore state. Keep this clip
+    // rectangle out of the shared path so later toolbar strokes cannot draw it.
+    cr.new_path();
     cr.rectangle(r.x, r.y, r.w, r.h);
     cr.clip();
     // Cairo's toy text API picks one face and has no glyph fallback. On Linux
@@ -416,6 +419,7 @@ fn draw_centered_text(cr: &Context, r: Rect, text: &str, size: f64, rgba: (f64, 
     let ty = r.y + ((r.h - text_height as f64) / 2.0).max(0.0) - logical.y() as f64;
     cr.move_to(r.x - logical.x() as f64, ty);
     pangocairo::functions::show_layout(cr, &layout);
+    cr.new_path();
     let _ = cr.restore();
 }
 
