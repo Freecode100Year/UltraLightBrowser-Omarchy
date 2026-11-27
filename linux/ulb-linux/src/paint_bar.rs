@@ -395,19 +395,27 @@ fn draw_centered_text(cr: &Context, r: Rect, text: &str, size: f64, rgba: (f64, 
     let _ = cr.save();
     cr.rectangle(r.x, r.y, r.w, r.h);
     cr.clip();
-    cr.select_font_face("Sans", cairo::FontSlant::Normal, cairo::FontWeight::Normal);
-    cr.set_font_size(size);
+    // Cairo's toy text API picks one face and has no glyph fallback. On Linux
+    // that turns CJK page titles into tofu even when a suitable font is installed.
+    // Pango resolves fallback fonts (and clips long titles) consistently.
+    let layout = pangocairo::functions::create_layout(cr);
+    let mut font = gtk4::pango::FontDescription::from_string("Sans");
+    font.set_size((size * gtk4::pango::SCALE as f64) as i32);
+    layout.set_font_description(Some(&font));
+    layout.set_text(text);
+    layout.set_width((r.w * gtk4::pango::SCALE as f64) as i32);
+    layout.set_ellipsize(gtk4::pango::EllipsizeMode::End);
+    layout.set_alignment(if center_h {
+        gtk4::pango::Alignment::Center
+    } else {
+        gtk4::pango::Alignment::Left
+    });
     cr.set_source_rgba(rgba.0, rgba.1, rgba.2, rgba.3);
-    if let Ok(ext) = cr.text_extents(text) {
-        let ty = r.y + (r.h - ext.height()) / 2.0 - ext.y_bearing();
-        let tx = if center_h {
-            r.x + ((r.w - ext.width()) / 2.0).max(0.0)
-        } else {
-            r.x
-        };
-        cr.move_to(tx, ty);
-        let _ = cr.show_text(text);
-    }
+    let (_, logical) = layout.pixel_extents();
+    let (_, text_height) = layout.pixel_size();
+    let ty = r.y + ((r.h - text_height as f64) / 2.0).max(0.0) - logical.y() as f64;
+    cr.move_to(r.x - logical.x() as f64, ty);
+    pangocairo::functions::show_layout(cr, &layout);
     let _ = cr.restore();
 }
 
