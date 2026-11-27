@@ -1615,6 +1615,12 @@ impl BrowserWindow {
         let key_ctrl = EventControllerKey::new();
         let bw_key = Rc::clone(self);
         key_ctrl.connect_key_pressed(move |_, key, _code, mods| {
+            // Let GtkEntry handle editing shortcuts (Ctrl+A/C/V/W, IME keys,
+            // etc.) while the address field is active. Browser accelerators
+            // apply only when keyboard focus is outside the entry.
+            if bw_key.address_entry.has_focus() && key != gdk::Key::Escape {
+                return glib::Propagation::Proceed;
+            }
             let ctrl = mods.contains(gdk::ModifierType::CONTROL_MASK);
             let shift = mods.contains(gdk::ModifierType::SHIFT_MASK);
             if ctrl && key == gdk::Key::t {
