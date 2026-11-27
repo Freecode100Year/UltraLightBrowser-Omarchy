@@ -680,6 +680,11 @@ pub fn run_browser(
             }
             bw_close.sidebar_engine.borrow_mut().take();
             bw_close.cef_runtime.borrow_mut().take();
+            {
+                let mut st = bw_close.state.borrow_mut();
+                st._ipc.take();
+                st._session.cleanup();
+            }
             glib::Propagation::Proceed
         }
     });

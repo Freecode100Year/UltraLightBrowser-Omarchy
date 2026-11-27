@@ -30,11 +30,15 @@ impl SessionDir {
     pub fn path(&self) -> &Path {
         &self.path
     }
+
+    pub fn cleanup(&self) {
+        let _ = fs::remove_dir_all(&self.path);
+    }
 }
 
 impl Drop for SessionDir {
     fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.path);
+        self.cleanup();
     }
 }
 
@@ -164,9 +168,15 @@ pub struct IpcGuard {
     sock: PathBuf,
 }
 
+impl IpcGuard {
+    pub fn cleanup(&self) {
+        let _ = fs::remove_file(&self.sock);
+    }
+}
+
 impl Drop for IpcGuard {
     fn drop(&mut self) {
-        let _ = fs::remove_file(&self.sock);
+        self.cleanup();
     }
 }
 
