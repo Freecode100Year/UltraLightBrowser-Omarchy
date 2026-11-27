@@ -20,26 +20,40 @@ if ! command -v pacman >/dev/null 2>&1 || ! command -v makepkg >/dev/null 2>&1; 
   die "未找到 pacman 或 makepkg，请确认当前系统为 Arch Linux / Omarchy。"
 fi
 
-# 支持 Omarchy 常见的 mise / rustup 用户态工具链
-for extra_bin in "$HOME/.local/share/mise/shims" "$HOME/.cargo/bin" "$HOME/.local/bin"; do
-  if [[ -d "$extra_bin" && ":$PATH:" != *":$extra_bin:"* ]]; then
-    export PATH="$extra_bin:$PATH"
-  fi
-done
+# 优先检测已有可用工具链；若命中未激活全局版本的 mise shim，则补充真实安装目录或回退 pacman
+if ! cargo --version >/dev/null 2>&1; then
+  for d in "$HOME/.cargo/bin" "$HOME/.local/share/mise/installs/rust/latest/bin"; do
+    if [[ -x "$d/cargo" ]] && "$d/cargo" --version >/dev/null 2>&1; then
+      export PATH="$d:$PATH"
+      break
+    fi
+  done
+fi
+
+if ! go version >/dev/null 2>&1; then
+  for d in "$HOME/.local/share/mise/installs/go/latest/bin" "/usr/local/go/bin"; do
+    if [[ -x "$d/go" ]] && "$d/go" version >/dev/null 2>&1; then
+      export PATH="$d:$PATH"
+      break
+    fi
+  done
+fi
 
 PACMAN_PKGS=(cef gtk4 libpipewire unzip git base-devel clang pkgconf)
-if ! command -v cargo >/dev/null 2>&1; then
+if ! cargo --version >/dev/null 2>&1; then
   PACMAN_PKGS+=(rust)
+  export PATH="/usr/bin:$PATH"
 fi
-if ! command -v go >/dev/null 2>&1; then
+if ! go version >/dev/null 2>&1; then
   PACMAN_PKGS+=(go)
+  export PATH="/usr/bin:$PATH"
 fi
 
 info "安装运行与构建依赖：${PACMAN_PKGS[*]}"
 sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}"
 
-command -v cargo >/dev/null 2>&1 || die "未检测到 cargo，请检查 Rust 工具链。"
-command -v go >/dev/null 2>&1 || die "未检测到 go，请检查 Go 工具链。"
+cargo --version >/dev/null 2>&1 || die "未检测到可用 cargo，请检查 Rust 工具链。"
+go version >/dev/null 2>&1 || die "未检测到可用 go，请检查 Go 工具链。"
 
 TMP_WORK=""
 cleanup() {
