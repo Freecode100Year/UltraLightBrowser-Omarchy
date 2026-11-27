@@ -205,12 +205,20 @@ impl AppState {
         let st = self.stores.lock().unwrap();
         if st.config.settings.new_tab_page == "blank" {
             "about:blank".to_string()
-        } else if st.config.settings.start_url.is_empty()
-            || st.config.settings.start_url == DEFAULT_HOME_URL
-        {
+        } else if st.config.settings.new_tab_page == "start" {
             internal_url("start.html")
+        } else if st.config.settings.start_url.is_empty() {
+            DEFAULT_HOME_URL.to_string()
         } else {
             st.config.settings.start_url.clone()
+        }
+    }
+
+    fn startup_url(&self) -> String {
+        if self.stores.lock().unwrap().config.settings.startup_page == "start" {
+            internal_url("start.html")
+        } else {
+            self.home_url()
         }
     }
 
@@ -587,7 +595,7 @@ pub fn run_browser(
         bw.new_tab(&internal_url("start.html"), false);
         bw.new_tab(&format!("http://127.0.0.1:{port}/"), true);
     } else if initial_urls.is_empty() {
-        let start = bw.state.borrow().home_url();
+        let start = bw.state.borrow().startup_url();
         bw.new_tab(&start, true);
     } else {
         for (i, u) in initial_urls.iter().enumerate() {

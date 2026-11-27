@@ -6,7 +6,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub const DEFAULT_MAC_PLATFORM_VERSION: &str = "27.2.0";
-pub const DEFAULT_HOME_URL: &str = "https://search.brave.com/?utm_source=freedom8964.com";
+pub const DEFAULT_HOME_URL: &str = "https://freedom8964.com/";
+const LEGACY_HOME_URL: &str = "https://search.brave.com/?utm_source=freedom8964.com";
 const MAX_RULES_PER_HOST: usize = 100;
 
 /// Migrates legacy default macOS platform version `"26.2.0"` to `"27.2.0"`.
@@ -16,10 +17,6 @@ pub fn migrate_mac_platform_version(version: &str) -> String {
     } else {
         version.to_string()
     }
-}
-
-pub fn is_default_home_url(url: &str) -> bool {
-    url == DEFAULT_HOME_URL
 }
 
 fn valid_mac_platform_version(v: &str) -> bool {
@@ -162,6 +159,11 @@ impl ConfigStore {
             if let Some(u) = get_str("startUrl") {
                 self.settings.start_url = u.to_string();
             }
+            if self.settings.start_url == LEGACY_HOME_URL
+                || self.settings.start_url == "https://www.google.com"
+            {
+                self.settings.start_url = DEFAULT_HOME_URL.to_string();
+            }
             if let Some(p) = get_str("userAgentProfile") {
                 self.settings.user_agent_profile = if p == "macos-edge" {
                     "macos-edge".to_string()
@@ -234,9 +236,6 @@ impl ConfigStore {
             read_bool("useLine", &mut self.settings.use_line);
 
             if !s.contains_key("homeVersion") {
-                if self.settings.start_url == "https://www.google.com" {
-                    self.settings.start_url = DEFAULT_HOME_URL.to_string();
-                }
                 if self.settings.startup_page == "start" {
                     self.settings.startup_page = "home".to_string();
                 }

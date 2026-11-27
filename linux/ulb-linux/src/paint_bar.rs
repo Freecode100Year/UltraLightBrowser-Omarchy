@@ -427,7 +427,7 @@ fn display_url(tab: &TabState) -> &str {
     if !tab.reader_source.is_empty() {
         return &tab.reader_source;
     }
-    if is_internal_url(&tab.url) || ulb_core::config::is_default_home_url(&tab.url) {
+    if is_internal_url(&tab.url) {
         return "";
     }
     &tab.url

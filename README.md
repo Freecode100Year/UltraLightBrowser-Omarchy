@@ -29,6 +29,7 @@ curl -fsSL https://raw.githubusercontent.com/Freecode100Year/UltraLightBrowser-O
 ```
 
 - **默认兼容 `mise` / `rustup` / 系统 `pacman` 工具链**（本机已有 `cargo` 与 `go` 时不会重复安装）。
+- **默认主页、启动页和新标签页**均打开 `https://freedom8964.com/`；已有自定义设置会保留。
 - **不打包 300MB+ 冗余内核**：动态链接 Arch 官方 `extra/cef`（`/usr/lib/cef/libcef.so`），随系统滚更获得安全更新。
 - **启动**：终端执行 `ulb-linux`（无痕模式 `ulb-linux --private`），或直接从 Omarchy / Walker 应用启动器打开 **UltraLightBrowser**。
 - **卸载**：
