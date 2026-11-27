@@ -1,0 +1,122 @@
+# Power manager regression tests
+
+Compile and run on Linux with a C++20 compiler:
+
+```sh
+g++ -std=c++20 -Wall -Wextra -Werror -Itests/stubs -Isrc tests/power_manager_test.cpp src/PowerManager.cpp -o /tmp/power-tests
+/tmp/power-tests
+```
+
+The tests compile the actual `src/PowerManager.cpp`. The headers in `stubs/`
+provide deterministic Win32/WebView2 API boundaries so failures and callback
+ordering can be reproduced without Windows. They are only on the test include
+path and do not enter the application build. Assertions remain active in
+optimized builds.
+
+Coverage includes rejected and failed suspension, retry, foreground restore
+racing suspension completion, background audio racing completion, controller
+visibility, memory target restoration, audio renderer throttling, descendants,
+unrelated PIDs, duplicate/cyclic entries, and one snapshot per traversal.
+
+These tests do not emulate real COM ownership, Windows scheduling, or WebView2
+playback. The separate Windows CI job compiles and links the native application.
+Before release, test on Windows 11 with WebView2:
+
+1. Minimize a silent page, then restore it rapidly and after several seconds.
+   Confirm the page stays visible and interactive.
+2. Play audio, minimize, and confirm playback continues. Stop and restart audio
+   in the background (for example using media controls), then restore.
+3. Leave a silent window unfocused for five minutes, then focus it again.
+4. Repeat minimize/restore during navigation and with multiple renderer processes.
+5. Verify child renderer EcoQoS is removed for foreground and audio playback.
+
+## Fullscreen geometry
+
+```sh
+g++ -std=c++20 -Wall -Wextra -Werror -Isrc tests/window_geometry_test.cpp -o /tmp/geometry-tests
+/tmp/geometry-tests
+```
+
+Tests cover fullscreen from normal/maximized state, normal maximization respecting
+the taskbar, and negative monitor coordinates. On Windows, check F11 and a video
+player's fullscreen button from both normal and maximized windows. Confirm all
+four edges cover the monitor, square corners, no taskbar gap, and correct restore
+with Esc/F11. Repeat on a second display and at 125%/150% DPI.
+
+## Audio routing
+
+```sh
+node tests/audio_enhancer_test.cjs
+```
+
+The test reconstructs the actual C++ raw-string injection script and executes it
+with deterministic DOM/Web Audio boundaries. It verifies native mode creates no
+AudioContext, speaker output uses separate merger channels, disabled effects
+bypass processing, speaker mode avoids HRTF, dialogue uses mild compression,
+diagnostics do not claim native media, and gain updates preserve the source.
+These tests verify graph topology and parameters, not audible quality or actual
+browser channel-mixing/latency behavior. Native Windows checks are required.
+
+`python3 tests/audio_registration_test.py` compiles the actual C++ registration
+block extracted from WebViewManager.cpp. Deterministic callbacks exercise both
+completion orders, retained reload requests, stale-script removal, asynchronous
+failure and synchronous failure. It still does not emulate real COM ownership.
+
+## XQL-MUSIC-inspired response verification
+
+`node tests/verify_audio_response.mjs` checks 48kHz static crossfeed centre response,
+LR4 idle sum and vocal EQ headroom from shipped constants. Matching the 6ms
+compressor lookahead is checked too. This is not an end-to-end sound-quality test.
+
+## UA profiles
+
+`g++ -std=c++20 -Wall -Wextra -Werror -Isrc tests/user_agent_test.cpp -o /tmp/ua-tests && /tmp/ua-tests` checks UA platform replacement, Edge version preservation, macOS 27.2 default, migration of the old default, preservation of custom platform versions, and malformed UA rejection. Native settings application needs Windows verification.
+
+`g++ -std=c++20 -Wall -Wextra -Werror -Isrc tests/mac_device_profile_test.cpp -o /tmp/mac-device-profile-tests && /tmp/mac-device-profile-tests` checks the session profile catalog, RNG-failure fallback selection, and deterministic script binding for GPU and hardware concurrency without perturbing Canvas or audio readbacks.
+
+## Video diagnostics
+
+`node tests/video_diagnostics_test.cjs` executes the shipped script with deterministic media boundaries and checks frame deltas, drop percentage, buffer range, reset and unsupported stats. It does not play video.
+
+## Browser library and built-in pages (v2.0)
+
+`g++ -std=c++20 -Wall -Wextra -Werror -Isrc tests/library_test.cpp src/Library.cpp -o /tmp/library-tests && /tmp/library-tests` covers bookmarks, folders, Netscape HTML import/export, history ranking and clearing, suggestions, reading list, tab groups, per-site settings, privacy statistics and persistence.
+
+`python3 tests/ui_resources_test.py` checks that every file under `ui/` is embedded by `resources/resource.rc`, extracted by `InternalPages.cpp`, and that every page carries a Content-Security-Policy without inline scripts.
+
+## Windows UI smoke test
+
+`tests/smoke-ui.ps1` (run by the manual "UI smoke" workflow) launches the Release build on a Windows runner, drives it with keyboard and mouse (tabs, menu, share, reader, find, sidebar, overview, history, bookmarks, settings, private window, close/restart persistence, macOS identity in several tabs) and uploads screenshots.
+
+## Ad and tracker blocking
+
+```sh
+g++ -std=c++20 -Wall -Wextra -Werror -Isrc tests/adblock_rules_test.cpp src/AdBlockRules.cpp -o /tmp/adblock-tests
+/tmp/adblock-tests
+node tests/adblock_scripts_test.cjs
+```
+
+The C++ test runs the production rules in `src/AdBlockRules.cpp`: host parsing,
+registrable domains, first-party exemptions, host+path rules, script surrogates,
+and that every blocked sample is routed by the WebView2 request filter patterns.
+The Node test executes the embedded page scripts (element hiding, per-site
+exceptions in frames, YouTube pruning and skip fallback, surrogates for ga, gtag,
+googletag and adsbygoogle) against small DOM stand-ins. On Windows, also check
+that YouTube plays without pre-roll ads, a news site shows no empty ad boxes, and
+switching "此网站的设置 → 内容拦截器" off brings ads back after the reload.
+
+## Audio endpoint and room impulse
+
+```sh
+g++ -std=c++20 -Wall -Wextra -Werror -Isrc tests/audio_endpoint_test.cpp -o /tmp/endpoint-tests
+/tmp/endpoint-tests
+node tests/room_impulse_test.cjs
+```
+
+`audio_endpoint_test.cpp` checks headphone detection (`src/AudioEndpoint.hpp`):
+headphone form factors, and devices that report Speakers/LineLevel/Unknown but
+are named as headphones (Realtek jacks, USB DACs, Bluetooth). `room_impulse_test.cjs`
+runs the cinema preset's room impulse response: deterministic, decorrelated,
+damped highs, same energy as before. On Windows, with 声音 → 输出设备 → 自动检测
+and the cinema or standard preset on, plug in or connect headphones during
+playback: crossfeed should switch on within a second without a reload.

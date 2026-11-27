@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "ulb-core",
+    "ulb-cef",
+    "ulb-linux",
+]

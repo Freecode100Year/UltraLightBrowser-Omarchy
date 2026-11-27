@@ -1,0 +1,67 @@
+#include <windows.h>
+
+#define IDI_APP_ICON 101
+
+IDI_APP_ICON ICON "app.ico"
+
+// Built-in pages (extracted to %LOCALAPPDATA%\\UltraLightBrowser\\ui at startup)
+3001 RCDATA "..\\ui\\ui.css"
+3002 RCDATA "..\\ui\\ui.js"
+3003 RCDATA "..\\ui\\start.html"
+3004 RCDATA "..\\ui\\start.css"
+3005 RCDATA "..\\ui\\start.js"
+3006 RCDATA "..\\ui\\history.html"
+3007 RCDATA "..\\ui\\history.js"
+3008 RCDATA "..\\ui\\bookmarks.html"
+3009 RCDATA "..\\ui\\bookmarks.js"
+3010 RCDATA "..\\ui\\settings.html"
+3011 RCDATA "..\\ui\\settings.js"
+3014 RCDATA "..\\ui\\overview.html"
+3015 RCDATA "..\\ui\\overview.js"
+3016 RCDATA "..\\ui\\sidebar.html"
+3017 RCDATA "..\\ui\\sidebar.js"
+3018 RCDATA "..\\ui\\reader.html"
+3019 RCDATA "..\\ui\\reader.css"
+3020 RCDATA "..\\ui\\reader.js"
+3021 RCDATA "..\\ui\\reader-extract.js"
+3022 RCDATA "..\\ui\\find.js"
+3023 RCDATA "..\\ui\\vendor\\Readability.js"
+3024 RCDATA "..\\ui\\vendor\\Readability-readerable.js"
+4001 RCDATA "..\\warp\\bin\\ulb-warp.exe"
+// freedom8964.com offline snapshot, made by tools/pack_f8964.py before the build
+4002 RCDATA "f8964.pack"
+
+// Manifest resource
+1 24 "app.manifest"
+
+// Version information
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     2,4,3,0
+PRODUCTVERSION  2,4,3,0
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      "UltraLightBrowser"
+            VALUE "FileDescription",  "UltraLight Browser - Minimal, Ultra-Fast Windows 11 Native Browser (Safari-style UI)"
+            VALUE "FileVersion",      "2.4.3.0"
+            VALUE "InternalName",     "UltraLightBrowser"
+            VALUE "LegalCopyright",   "Copyright (C) 2026 Freecode100Year"
+            VALUE "OriginalFilename", "UltraLightBrowser.exe"
+            VALUE "ProductName",      "UltraLight Browser"
+            VALUE "ProductVersion",   "2.4.3.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200
+    END
+END
+
+

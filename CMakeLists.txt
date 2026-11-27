@@ -1,0 +1,212 @@
+cmake_minimum_required(VERSION 3.25)
+
+project(UltraLightBrowser
+    VERSION 2.10.1
+    DESCRIPTION "Minimal, Ultra-Fast Windows 11 Native Browser Shell (macOS Safari UI Edition)"
+    LANGUAGES CXX C
+)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Ensure Unicode and Win32 definitions
+add_compile_definitions(
+    UNICODE
+    _UNICODE
+    WIN32_LEAN_AND_MEAN
+    NOMINMAX
+    _WIN32_WINNT=0x0A00 # Target Windows 10/11
+    WINVER=0x0A00
+    "ULB_VERSION=\"${PROJECT_VERSION}\""
+)
+
+# Compiler & Linker optimizations for MSVC
+if(MSVC)
+    add_compile_options(
+        $<$<NOT:$<CONFIG:Debug>>:/O2>                 # Maximum optimization (favor speed)
+        $<$<NOT:$<CONFIG:Debug>>:/Oi>                 # Enable intrinsic functions
+        $<$<NOT:$<CONFIG:Debug>>:/Ot>                 # Favor fast code
+        $<$<NOT:$<CONFIG:Debug>>:/GL>                 # Whole program optimization
+        $<$<NOT:$<CONFIG:Debug>>:/Gy>                 # Enable function-level linking
+        /utf-8              # Set source and execution character sets to UTF-8
+        /permissive-        # Strict standard conformance
+        /EHsc               # Standard C++ stack unwinding
+        /W4                 # Warning level 4
+        /Zc:inline          # Remove unreferenced functions/data
+        /Zc:preprocessor    # Conforming preprocessor
+        /guard:cf           # Control Flow Guard
+        /sdl                # Additional Security Development Lifecycle checks
+    )
+    add_link_options(
+        $<$<NOT:$<CONFIG:Debug>>:/LTCG>               # Link-time code generation
+        $<$<NOT:$<CONFIG:Debug>>:/OPT:REF>            # Eliminate unreferenced functions/data
+        $<$<NOT:$<CONFIG:Debug>>:/OPT:ICF>            # Identical COMDAT folding (reduce binary size)
+        /SUBSYSTEM:WINDOWS  # Pure Win32 GUI application
+        /MANIFEST:NO        # Custom manifest embedded via resource.rc
+        /guard:cf           # Control Flow Guard
+        /CETCOMPAT          # Intel CET shadow stack
+        /DYNAMICBASE        # ASLR
+        /NXCOMPAT           # DEP
+        /HIGHENTROPYVA      # 64-bit ASLR
+    )
+endif()
+
+# Locate Dependencies (vcpkg or NuGet)
+find_package(wil CONFIG QUIET)
+find_package(nlohmann_json CONFIG QUIET)
+
+# Source files
+set(SOURCE_FILES
+    src/main.cpp
+    src/AppShell.cpp
+    src/AppShell.hpp
+    src/MainWindow.cpp
+    src/MainWindowTabs.cpp
+    src/MainWindowPaint.cpp
+    src/MainWindowPages.cpp
+    src/MainWindowMenus.cpp
+    src/MainWindow.hpp
+    src/Commands.hpp
+    src/Icons.cpp
+    src/Icons.hpp
+    src/InternalPages.cpp
+    src/InternalPages.hpp
+    src/Library.cpp
+    src/Library.hpp
+    src/WebViewManager.cpp
+    src/WebViewManager.hpp
+    src/AdBlockRules.cpp
+    src/AdBlockRules.hpp
+    src/AudioEndpoint.hpp
+    src/AudioEndpointWatcher.cpp
+    src/AudioEndpointWatcher.hpp
+    src/NativeRequestFilter.cpp
+    src/NativeRequestFilter.hpp
+    src/ElementBlocker.cpp
+    src/ElementBlocker.hpp
+    src/PowerManager.cpp
+    src/PowerManager.hpp
+    src/WarpManager.cpp
+    src/WarpManager.hpp
+    src/LineStore.cpp
+    src/LineStore.hpp
+    src/UserScripts.cpp
+    src/UserScripts.hpp
+    src/ExtensionPackage.cpp
+    src/ExtensionPackage.hpp
+    src/Extensions.cpp
+    src/Extensions.hpp
+    src/Config.cpp
+    src/Config.hpp
+    src/StringUtils.hpp
+    resources/resource.rc
+)
+
+add_executable(UltraLightBrowser WIN32 ${SOURCE_FILES})
+
+# Build the platform-independent request-matching engine as a Rust static library.
+find_program(CARGO_EXECUTABLE cargo REQUIRED)
+if(WIN32)
+    set(ADBLOCK_RUST_LIBRARY "${CMAKE_BINARY_DIR}/rust/release/ulb_adblock.lib")
+else()
+    set(ADBLOCK_RUST_LIBRARY "${CMAKE_BINARY_DIR}/rust/release/libulb_adblock.a")
+endif()
+add_custom_command(
+    OUTPUT "${ADBLOCK_RUST_LIBRARY}"
+    COMMAND "${CARGO_EXECUTABLE}" build --release --locked
+            --manifest-path "${CMAKE_CURRENT_SOURCE_DIR}/rust/adblock/Cargo.toml"
+            --target-dir "${CMAKE_BINARY_DIR}/rust"
+    DEPENDS rust/adblock/Cargo.toml rust/adblock/Cargo.lock rust/adblock/src/lib.rs rust/adblock/domains.txt
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Building Rust ad and tracker rules"
+    VERBATIM
+)
+add_custom_target(ulb_adblock_build DEPENDS "${ADBLOCK_RUST_LIBRARY}")
+add_dependencies(UltraLightBrowser ulb_adblock_build)
+target_link_libraries(UltraLightBrowser PRIVATE "${ADBLOCK_RUST_LIBRARY}")
+
+# NuGet Package directory fallback for Microsoft.Web.WebView2 & WIL
+set(NUGET_PACKAGES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/packages" CACHE PATH "Path to restored NuGet packages")
+file(GLOB WEBVIEW2_DIRS "${NUGET_PACKAGES_DIR}/Microsoft.Web.WebView2.*")
+file(GLOB WIL_DIRS "${NUGET_PACKAGES_DIR}/Microsoft.Windows.ImplementationLibrary.*")
+
+if(WEBVIEW2_DIRS)
+    list(GET WEBVIEW2_DIRS -1 LATEST_WEBVIEW2_DIR)
+    target_include_directories(UltraLightBrowser PRIVATE "${LATEST_WEBVIEW2_DIR}/build/native/include")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        target_link_directories(UltraLightBrowser PRIVATE "${LATEST_WEBVIEW2_DIR}/build/native/x64")
+        if(EXISTS "${LATEST_WEBVIEW2_DIR}/build/native/x64/WebView2LoaderStatic.lib")
+            target_link_libraries(UltraLightBrowser PRIVATE "${LATEST_WEBVIEW2_DIR}/build/native/x64/WebView2LoaderStatic.lib")
+        else()
+            target_link_libraries(UltraLightBrowser PRIVATE WebView2Loader.dll.lib)
+        endif()
+    else()
+        target_link_directories(UltraLightBrowser PRIVATE "${LATEST_WEBVIEW2_DIR}/build/native/x86")
+        target_link_libraries(UltraLightBrowser PRIVATE WebView2Loader.dll.lib)
+    endif()
+    
+    # Auto-copy WebView2Loader.dll to output directory if present
+    if(EXISTS "${LATEST_WEBVIEW2_DIR}/build/native/x64/WebView2Loader.dll")
+        add_custom_command(TARGET UltraLightBrowser POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LATEST_WEBVIEW2_DIR}/build/native/x64/WebView2Loader.dll"
+            $<TARGET_FILE_DIR:UltraLightBrowser>
+            COMMENT "Copying WebView2Loader.dll to target directory"
+        )
+    endif()
+endif()
+
+if(WIL_DIRS)
+    list(GET WIL_DIRS -1 LATEST_WIL_DIR)
+    target_include_directories(UltraLightBrowser PRIVATE "${LATEST_WIL_DIR}/include")
+endif()
+
+file(GLOB NLOHMANN_DIRS "${NUGET_PACKAGES_DIR}/nlohmann.json.*")
+if(NLOHMANN_DIRS)
+    list(GET NLOHMANN_DIRS -1 LATEST_NLOHMANN_DIR)
+    target_include_directories(UltraLightBrowser PRIVATE "${LATEST_NLOHMANN_DIR}/build/native/include")
+endif()
+
+# Include directories
+target_include_directories(UltraLightBrowser PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# Link Libraries
+if(TARGET WIL::WIL)
+    target_link_libraries(UltraLightBrowser PRIVATE WIL::WIL)
+endif()
+
+if(TARGET nlohmann_json::nlohmann_json)
+    target_link_libraries(UltraLightBrowser PRIVATE nlohmann_json::nlohmann_json)
+endif()
+
+target_link_libraries(UltraLightBrowser PRIVATE
+    dwmapi.lib
+    shlwapi.lib
+    comctl32.lib
+    version.lib
+    user32.lib
+    gdi32.lib
+    ole32.lib
+    oleaut32.lib
+    shell32.lib
+    advapi32.lib
+    uxtheme.lib
+    wininet.lib
+    propsys.lib
+    gdiplus.lib
+    crypt32.lib
+    bcrypt.lib
+    comdlg32.lib
+    ntdll.lib
+    userenv.lib
+    # Rust's std (ulb_adblock) uses WaitOnAddress / WakeByAddress* since late-2026 stable releases
+    synchronization.lib
+)
+
+# Embed Manifest
+set_target_properties(UltraLightBrowser PROPERTIES
+    VS_DPI_AWARE "PerMonitor"
+)
