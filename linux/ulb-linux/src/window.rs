@@ -12,8 +12,7 @@ use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::{
     Application, ApplicationWindow, Box as GtkBox, Button, DrawingArea, Entry, EventControllerKey,
-    EventControllerMotion, GestureClick, Label, ListBox, ListBoxRow, Orientation, Overlay,
-    Popover, PopoverMenu, ScrolledWindow, Stack, Widget,
+    EventControllerMotion, GestureClick, Label, Orientation, Overlay, PopoverMenu, Stack, Widget,
 };
 use std::cell::RefCell;
 use std::path::PathBuf;
@@ -255,8 +254,6 @@ pub struct BrowserWindow {
     window: ApplicationWindow,
     toolbar: DrawingArea,
     address_entry: Entry,
-    suggest_popover: Popover,
-    suggest_list: ListBox,
     find_bar: GtkBox,
     find_entry: Entry,
     find_status: Label,
@@ -482,17 +479,6 @@ pub fn run_browser(
     topbar_overlay.add_overlay(&address_entry);
     root_box.append(&topbar_overlay);
 
-    let suggest_list = ListBox::new();
-    let suggest_scroll = ScrolledWindow::builder()
-        .min_content_width(420)
-        .max_content_height(260)
-        .child(&suggest_list)
-        .build();
-    let suggest_popover = Popover::builder().child(&suggest_scroll).autohide(true).build();
-    // Keep keyboard focus in the address entry while suggestions are shown.
-    suggest_popover.set_focusable(false);
-    suggest_popover.set_parent(&address_entry);
-
     let find_bar = GtkBox::builder()
         .orientation(Orientation::Horizontal)
         .spacing(6)
@@ -549,8 +535,6 @@ pub fn run_browser(
         window: window.clone(),
         toolbar: toolbar.clone(),
         address_entry: address_entry.clone(),
-        suggest_popover,
-        suggest_list: suggest_list.clone(),
         find_bar,
         find_entry: find_entry.clone(),
         find_status,
@@ -1044,7 +1028,6 @@ impl BrowserWindow {
             st.sync_stores_tabs();
         }
         self.address_entry.set_visible(false);
-        self.suggest_popover.popdown();
         self.toolbar.queue_draw();
     }
 
@@ -1545,54 +1528,11 @@ impl BrowserWindow {
         let focus_ctrl = gtk4::EventControllerFocus::new();
         let bw_blur = Rc::clone(self);
         focus_ctrl.connect_leave(move |_| {
-            if !bw_blur.suggest_popover.is_visible() {
-                bw_blur.state.borrow_mut().address_focused = false;
-                bw_blur.address_entry.set_visible(false);
-                bw_blur.toolbar.queue_draw();
-            }
+            bw_blur.state.borrow_mut().address_focused = false;
+            bw_blur.address_entry.set_visible(false);
+            bw_blur.toolbar.queue_draw();
         });
         self.address_entry.add_controller(focus_ctrl);
-
-        let bw_chg = Rc::clone(self);
-        self.address_entry.connect_changed(move |e| {
-            let q = e.text().to_string();
-            while let Some(child) = bw_chg.suggest_list.first_child() {
-                bw_chg.suggest_list.remove(&child);
-            }
-            if q.trim().is_empty() {
-                bw_chg.suggest_popover.popdown();
-                return;
-            }
-            let sugs = bw_chg.state.borrow().stores.lock().unwrap().library.suggest(q.trim(), 8);
-            if sugs.is_empty() {
-                bw_chg.suggest_popover.popdown();
-                return;
-            }
-            for s in sugs {
-                let row = ListBoxRow::new();
-                let lbl = Label::builder()
-                    .label(format!("{} — {}", s.title, s.url))
-                    .halign(gtk4::Align::Start)
-                    .margin_start(8)
-                    .margin_end(8)
-                    .margin_top(4)
-                    .margin_bottom(4)
-                    .build();
-                lbl.set_widget_name(&s.url);
-                row.set_child(Some(&lbl));
-                bw_chg.suggest_list.append(&row);
-            }
-            bw_chg.suggest_popover.popup();
-            bw_chg.address_entry.grab_focus();
-        });
-
-        let bw_row = Rc::clone(self);
-        self.suggest_list.connect_row_activated(move |_, row| {
-            if let Some(child) = row.child() {
-                let url = child.widget_name().to_string();
-                bw_row.navigate_active(&url);
-            }
-        });
 
         let bw_fp = Rc::clone(self);
         find_prev.connect_clicked(move |_| {
@@ -1670,7 +1610,6 @@ impl BrowserWindow {
             if key == gdk::Key::Escape {
                 bw_key.state.borrow_mut().address_focused = false;
                 bw_key.address_entry.set_visible(false);
-                bw_key.suggest_popover.popdown();
                 bw_key.toolbar.queue_draw();
                 return glib::Propagation::Stop;
             }
